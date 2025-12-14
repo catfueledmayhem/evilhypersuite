@@ -31,4 +31,6 @@ void LoadAllSprites() {
     LoadTextureFromFile("resources/no-head.jpg"); // 4
     LoadTextureFromFile("resources/nhc-roof.jpg"); // 5
     LoadTextureFromFile("resources/fullgeardesync.png"); // 6
+    LoadTextureFromFile("resources/wallhop.jpg"); // 7
+    LoadTextureFromFile("resources/wallwalk.jpg"); // 8
 }

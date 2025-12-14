@@ -3,12 +3,14 @@
 #include "LoadTextures.hpp"
 #include "imgui.h"
 #include "rlImGui.h"
-#include "Globals.hpp"
 #include "inpctrl.hpp"
+#include "Globals.hpp"
 #include "logzz.hpp"
 #include "Helper.hpp"
 #include "LagSwitch.hpp"
 #include "Speedglitch.hpp"
+#include "FPSDropper.hpp"
+#include "WallhopAndWallwalk.hpp"
 #include "GlobalBasicSettings.hpp"
 #include <string>
 
@@ -79,9 +81,13 @@ void applyThemeColor(const ImVec4& color) {
 
 void initUI() {
     // Initialize rlImGui
-
     rlImGuiSetup(true);
     applyThemeColor(themeColor);
+    if (first_time) {
+        strncpy(setup_wizard_temp_process_name, roblox_process_name.c_str(), sizeof(setup_wizard_temp_process_name));
+        setup_wizard_temp_process_name[sizeof(setup_wizard_temp_process_name)-1] = '\0';
+    }
+
 }
 
 void UpdateUI() {
@@ -108,7 +114,8 @@ void UpdateUI() {
                 ImGuiWindowFlags_NoResize |
                 ImGuiWindowFlags_NoMove |
                 ImGuiWindowFlags_NoCollapse);
-    if (is_elevated) {
+
+    if (is_elevated && !first_time) {
         switch (logzz::current_state) {
             case OFFLINE: {
                 ImGui::Text("Roblox Hypersuite - Currently not on roblox.");
@@ -120,7 +127,12 @@ void UpdateUI() {
             }
             case IN_GAME: {
                 std::string placeName = logzz::find_name_for_universe(logzz::current_universe_ID);
-                std::string text = "Roblox Hypersuite - Currently in game (" + placeName + ")";
+                std::string text;
+                if (placeName.empty()) {
+                    text = "Roblox Hypersuite - Currently in game";
+                } else {
+                    text = "Roblox Hypersuite - Currently in game (" + placeName + ")";
+                }
                 ImGui::Text("%s", text.c_str());
                 break;
             }
@@ -177,6 +189,219 @@ void UpdateUI() {
         return;
 #endif
     }
+
+    //--------------FIRST TIME SETUP WIZARD THINGY------------------
+    if (first_time) {
+        switch (setup_wizard_page) {
+            case 0:
+                ImGui::TextWrapped(
+                    "Hello! Welcome to roblox hypersuite setup wizard!.\n\nThis is a roblox chea- I mean a roblox utility. With many features and macros to enhance your glitching/obbying experience. "
+                    "Let's get you set up with some basic configuration."
+                );
+                ImGui::Spacing();
+                ImGui::Separator();
+                ImGui::Spacing();
+                ImGui::TextColored(orange, "Features include:");
+                ImGui::BulletText("Speedglitch - Gain massive velocity while airborne");
+                ImGui::BulletText("Helicopter High Jump - Launch yourself upward");
+                ImGui::BulletText("Wallhop - Automatically time wallhops");
+                ImGui::BulletText("Wallwalk - Walk across walls without jumping");
+                ImGui::BulletText("Lag switch - Stop roblox packets from being sent.");
+                ImGui::BulletText("Ping increaser - Increases your ping for some glitches.");
+                ImGui::BulletText("Various clip techniques");
+                ImGui::BulletText("And much more!");
+                break;
+            case 1:
+                ImGui::TextWrapped("Step 1: Roblox Process Configuration");
+                ImGui::Separator();
+                ImGui::Spacing();
+                ImGui::TextWrapped(
+                    "Enter the name of your Roblox executable. This allows the macro to detect "
+                    "when Roblox is running and apply certain features."
+                );
+
+                ImGui::Spacing();
+                ImGui::Text("Roblox Process Name:");
+                ImGui::SetNextItemWidth(-1);
+                ImGui::InputText("##wizard_process", setup_wizard_temp_process_name, sizeof(setup_wizard_temp_process_name));
+                ImGui::Spacing();
+                ImGui::TextWrapped("Common values:");
+                ImGui::BulletText("Windows: RobloxPlayerBeta.exe");
+                ImGui::BulletText("Linux (Grapejuice): grapejuice");
+                ImGui::BulletText("Linux (Vinegar): vinegar");
+                ImGui::BulletText("Linux (Sober): sober / sober.real");
+
+                ImGui::Spacing();
+                ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f),
+                    "You can change this later in settings.");
+                break;
+            case 2: { // Keyboard layout
+                ImGui::TextWrapped("Step 2: Keyboard Layout");
+                ImGui::Separator();
+                ImGui::Spacing();
+
+                ImGui::TextWrapped(
+                    "Select your keyboard layout. This ensures chat commands are typed correctly."
+                );
+
+                ImGui::Spacing();
+                ImGui::Text("Keyboard Layout:");
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 1.0f));
+                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 4.0f));
+
+                ImGui::RadioButton("QWERTY (US/UK Standard)", &temp_kb_layout, 0);
+                ImGui::RadioButton("AZERTY (French)", &temp_kb_layout, 1);
+
+                ImGui::PopStyleVar(2);
+
+                ImGui::Spacing();
+                ImGui::TextWrapped(
+                    "QWERTY is the most common layout. Choose AZERTY if you use a French keyboard."
+                );
+                break;
+            }
+            case 3: {
+                ImGui::TextWrapped("Step 3: Roblox Game Settings");
+                ImGui::Separator();
+                ImGui::Spacing();
+
+                ImGui::TextWrapped(
+                    "Configure your Roblox in-game settings. These are critical for macros "
+                    "that involve camera movement."
+                );
+
+                ImGui::Spacing();
+
+                ImGui::Text("Roblox Camera Sensitivity (0.1 - 4.0):");
+                ImGui::SetNextItemWidth(200);
+                ImGui::SliderFloat("##wizard_sens", &temp_sensitivity, 0.1f, 4.0f, "%.2f");
+                if (temp_sensitivity < 0.001f) temp_sensitivity = 1.0f;
+                ImGui::SameLine();
+                ImGui::TextDisabled("(?)");
+                if (ImGui::IsItemHovered()) {
+                    ImGui::SetTooltip("Found in Roblox Settings > Camera > Camera Sensitivity");
+                }
+
+                ImGui::Spacing();
+
+                ImGui::Text("Your Roblox FPS:");
+                ImGui::SetNextItemWidth(200);
+                ImGui::InputInt("##wizard_fps", &temp_fps);
+                if (temp_fps < 1) temp_fps = 60;
+                ImGui::SameLine();
+                ImGui::TextDisabled("(?)");
+                if (ImGui::IsItemHovered()) {
+                    ImGui::SetTooltip("Press Shift+F5 in Roblox to see your FPS");
+                }
+                ImGui::Spacing();
+                ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "These settings can be adjusted anytime in the main interface.");
+                break;
+            }
+            case 4: {
+                ImGui::TextWrapped("Step 4: Ready to Go!");
+                ImGui::Separator();
+                ImGui::Spacing();
+
+                ImGui::TextWrapped("Your configuration summary:");
+
+                ImGui::Spacing();
+                ImGui::BulletText("Process Name: %s", setup_wizard_temp_process_name);
+                ImGui::BulletText("Keyboard Layout: %s",
+                    temp_kb_layout == 0 ? "QWERTY" : "AZERTY");
+                ImGui::BulletText("Sensitivity: %.2f", temp_sensitivity);
+                ImGui::BulletText("Target FPS: %d", temp_fps);
+
+                ImGui::Spacing();
+                ImGui::Separator();
+                ImGui::Spacing();
+
+                ImGui::TextWrapped("Tips for getting started:");
+                ImGui::BulletText("Check the keybinds section to see default hotkeys");
+                ImGui::BulletText("Enable/disable macros in the main interface");
+                ImGui::BulletText("Most macros require COM offset. Get it with gear desync.");
+                ImGui::BulletText("Read the docs at https://3443o-o.github.io/hypersuite/");
+
+                ImGui::Spacing();
+                ImGui::Spacing();
+
+                ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.5f, 1.0f),
+                    "Click 'Finish' to start using the macro utility!");
+                break;
+            }
+        }
+
+        ImVec2 button_size(80.0f, 20.0f);
+        float padding = 10.0f;
+
+        ImVec2 window_size = ImGui::GetWindowSize();
+
+        if (setup_wizard_page == 0) {
+            /* Bottom-left */
+            ImGui::SetCursorPos(ImVec2(
+                padding,
+                window_size.y - button_size.y - padding
+            ));
+
+            if (ImGui::Button("Skip Setup", button_size)) {
+                // Mark setup as skipped / complete
+                setup_complete = true;
+                first_time = false;
+
+                log("Setup wizard skipped by user");
+            }
+        }
+
+        ImGui::SetCursorPos(ImVec2(
+            window_size.x - (button_size.x * 2) - padding - 8.0f,
+            window_size.y - button_size.y - padding
+        ));
+        ImGui::BeginDisabled(setup_wizard_page == 0 || setup_wizard_page >= 4);
+        if (ImGui::Button("Previous", button_size)) {
+            setup_wizard_page--;
+        }
+        ImGui::EndDisabled();
+
+        ImGui::SameLine();
+        if (setup_wizard_page >= 4) {
+            if (ImGui::Button("Finish", button_size)) {
+                // Apply all settings
+                roblox_process_name = setup_wizard_temp_process_name;
+                kb_layout = temp_kb_layout;
+                roblox_sensitivity = temp_sensitivity;
+                roblox_fps = temp_fps;
+
+                // Update dependent calculations
+                updateSpeedglitchSensitivity(roblox_sensitivity, cam_fix_active);
+                updateSpeedglitchFPS(roblox_fps);
+                calculateWallhopPixels();
+                calculateWallwalkPixels();
+
+                // Mark setup as complete
+                setup_complete = true;
+                first_time = false;
+
+                log("Setup wizard completed successfully");
+            }
+        } else  {
+            if (setup_wizard_page == 1) {
+                bool is_empty = (strlen(setup_wizard_temp_process_name) == 0);
+
+                ImGui::BeginDisabled(is_empty || setup_wizard_page == 0);
+                if (ImGui::Button("Next", button_size)) {
+                    setup_wizard_page++;
+                }
+                ImGui::EndDisabled();
+            } else {
+                if (ImGui::Button("Next", button_size)) {
+                    setup_wizard_page++;
+                }
+            }
+
+        }
+
+        ImGui::End();
+        return;
+    }
     // Tab Bar
     if (ImGui::BeginTabBar("MainTabBar")) {
 
@@ -216,6 +441,10 @@ void UpdateUI() {
                     CodeName = "Full-Gear-Desync";
                 } else if (std::string(label) == "Floor Bounce High Jump") {
                     CodeName = "Floor-Bounce-High-Jump";
+                } else if (std::string(label) == "FPS Dropper") {
+                    CodeName = "FPS-Drop";
+                } else {
+                    CodeName = std::string(label);
                 }
 
                 // Determine if this option is enabled
@@ -288,6 +517,9 @@ void UpdateUI() {
             DrawOptionButton("Helicopter High Jump");
             DrawOptionButton("Full Gear Desync");
             DrawOptionButton("Floor Bounce High Jump");
+            DrawOptionButton("Wallhop");
+            DrawOptionButton("Wallwalk");
+            DrawOptionButton("FPS Dropper");
 
             ImGui::EndChild();
 
@@ -436,6 +668,55 @@ void UpdateUI() {
                 ImGui::TextWrapped("This macro allows you to jump 15+ studs vertically without anything!");
                 ImGui::TextWrapped("To do this, just. Have 240 fps or more. That's it.\n\n");
                 ImGui::TextWrapped("After this, it's pretty straightforward, just trigger the macro! And you should get the high jump once every 3 attempts.");
+            } else if (current_option == "Wallhop") {
+                ImGui::Text("Wallhop information:");
+                ImGui::Separator();
+                ImGui::TextColored(orange, "Targetted FPS: 60.\n");
+                ImGui::TextWrapped("This macro allows you to 'double jump' if there are 2 parts one above another in a wall.\n\nTo do this, please have make sure you are set up like this.\n");
+                float windowWidth = ImGui::GetContentRegionAvail().x;
+                float imageWidth = 248.0f;
+                float offset = (windowWidth - imageWidth) * 0.5f;
+
+                if (offset > 0.0f)
+                    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
+
+                rlImGuiImageSize(&LoadedTextures[7], imageWidth, 140);
+                ImGui::TextWrapped("After this, it's pretty straightforward, just trigger the macro! You can also do it horizontally. But if you can do that then you probably don't need this stupid macro.");
+            } else if (current_option == "Wallwalk") {
+                ImGui::Text("Wallwalk information:");
+                ImGui::Separator();
+                ImGui::TextColored(orange, "Targetted FPS: 30-60.\n");
+                ImGui::TextWrapped("This macro allows you to walk inside walls if there are 2 parts one above another. \n\nTo do this, please have make sure you are set up like this.\n");
+                float windowWidth = ImGui::GetContentRegionAvail().x;
+                float imageWidth = 248.0f;
+                float offset = (windowWidth - imageWidth) * 0.5f;
+
+                if (offset > 0.0f)
+                    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
+
+                rlImGuiImageSize(&LoadedTextures[8], imageWidth, 140);
+                ImGui::TextWrapped("After this, it's pretty straightforward, just trigger the macro, holding down W and D.");
+            } else if (current_option == "FPS Dropper") {
+                ImGui::Text("FPS Dropper information:");
+                ImGui::Separator();
+                ImGui::TextColored(orange, "Targetted FPS: 60.");
+                ImGui::TextWrapped("This macro allows you to throttle your roblox FPS. The way it works is by freezing the process repeatedly. Just make sure you're on 60 FPS before trying to use it.");
+                ImGui::TextWrapped("It isn't guaranteed for this to set your FPS cap as you like, but it's as consistent as it possibly can get.");
+
+                ImGui::Spacing();
+                ImGui::Text("Target FPS:");
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(80);
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 2));
+                if (ImGui::InputText("##target_fps", FpsDrop::fps_input, sizeof(FpsDrop::fps_input), ImGuiInputTextFlags_CharsDecimal)) {
+                    unsigned long val = strtoul(FpsDrop::fps_input, nullptr, 10);
+                    if (val > 0) {
+                        FpsDrop::target_fps = static_cast<unsigned int>(val);
+                    }
+                }
+                ImGui::PopStyleVar();
+                ImGui::SameLine();
+                ImGui::TextDisabled("(Current: %u)", FpsDrop::target_fps);
             } else {
                 // Window padding and style
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15, 15));
@@ -497,7 +778,7 @@ void UpdateUI() {
             }
             ImGui::Checkbox("Allow advanced settings", &LagSwitchNamespace::customValuesAllowed);
             if (LagSwitchNamespace::customValuesAllowed) {
-                ImGui::SliderFloat("Packet loss %", &LagSwitchNamespace::PacketLossPercentage, 80.0f, 100.0f);
+                ImGui::SliderFloat("Packet pass %", &LagSwitchNamespace::PacketLossPercentage, 80.0f, 100.0f);
                 ImGui::InputInt("Lag Time (ms)", &LagSwitchNamespace::LagTimeMilliseconds);
             }
 
@@ -505,6 +786,10 @@ void UpdateUI() {
         }
         renderRobloxSettingsWindow();
 
+        //if (ImGui::BeginTabItem("Account Manager")) {
+
+          //  ImGui::EndTabItem();
+          //}
 
         if (ImGui::BeginTabItem("Settings")) {
             // ==== GLOBAL SETTINGS ====
@@ -575,6 +860,8 @@ void UpdateUI() {
             ImGui::SameLine(120);
             if (ImGui::Checkbox("##camfix", &cam_fix_active)) {
                 updateSpeedglitchSensitivity(roblox_sensitivity, cam_fix_active);
+                calculateWallhopPixels();
+                calculateWallwalkPixels();
             }
 
             ImGui::PushItemWidth(100);
@@ -586,6 +873,8 @@ void UpdateUI() {
                 if (roblox_sensitivity < 0.1f) roblox_sensitivity = 0.1f;
                 if (roblox_sensitivity > 4.0f) roblox_sensitivity = 4.0f;
                 updateSpeedglitchSensitivity(roblox_sensitivity, cam_fix_active);
+                calculateWallhopPixels();
+                calculateWallwalkPixels();
             }
 
             ImGui::PopItemWidth();

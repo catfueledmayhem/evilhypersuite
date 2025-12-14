@@ -111,7 +111,6 @@ int main() {
     if (!decorated_window) SetWindowState(FLAG_WINDOW_UNDECORATED);
 #endif
 
-
     Vector2 dragOffset = {0};
     bool isDragging = false;
 
@@ -219,5 +218,6 @@ int main() {
     rlImGuiShutdown();
     UnloadAllTextures();
     CloseWindow();
+    CleanupMacros();
     return 0;
 }

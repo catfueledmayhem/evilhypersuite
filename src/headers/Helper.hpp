@@ -354,5 +354,11 @@ inline unsigned short GetIDFromCodeName(std::string CodeName) {
         return 14;
     } else if (CodeName == "Floor-Bounce-High-Jump") {
         return 15;
+    } else if (CodeName == "Wallhop") {
+        return 16;
+    } else if (CodeName == "Wallwalk") {
+        return 17;
+    } else if (CodeName == "FPS-Drop") {
+        return 18;
     } else return 2000;
 }

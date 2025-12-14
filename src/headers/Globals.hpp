@@ -53,6 +53,15 @@ inline bool lastWindowOnTop = windowOnTop;
 inline float screen_width;
 inline float screen_height;
 
+//-- Setup wizard ooo
+inline bool first_time = true;
+inline int setup_wizard_page = 0;
+inline bool setup_complete = false;
+static char setup_wizard_temp_process_name[128] = "";
+inline int temp_kb_layout;
+inline float temp_sensitivity;
+inline int temp_fps;
+
 // Macro specific
 //-- Speed glitch
 inline std::atomic<bool> speedglitch_active(false);
@@ -88,7 +97,7 @@ inline char placeIdBuffer[32] = "";  // buffer for Place ID input
 inline char instanceIdBuffer[64] = "";  // buffer for Instance ID (UUID format)
 
 // Debounces
-inline bool events[16] {
+inline bool events[19] {
     false, // Freeze
     false, // Laugh clip
     false, // E-Dance clip
@@ -105,9 +114,12 @@ inline bool events[16] {
     false, // gear desync
     false, // full gear desync
     false, // floor bounce hj
+    false, // Wallhop
+    false, // Wallwalk
+    false, // FPS dropper
 };
 
-inline bool enabled[16] {
+inline bool enabled[19] {
     true, // Freeze
     true, // Laugh clip
     false, // E-Dance clip
@@ -124,6 +136,9 @@ inline bool enabled[16] {
     false, // gear desync
     false, // full gear desync
     true, // floor bounce high jump
+    false, // Wallhop
+    false, // Wallwalk
+    true, // FPS drop
 };
 
 inline std::map<std::string, CrossInput::Key> Binds = {
@@ -140,6 +155,9 @@ inline std::map<std::string, CrossInput::Key> Binds = {
     {"Gear-Desync", CrossInput::Key::Num7}, // Gear desync
     {"Full-Gear-Desync", CrossInput::Key::Numpad0}, // Full Gear desync
     {"Floor-Bounce-High-Jump", CrossInput::Key::Numpad1}, // floor bounce hj
+    {"Wallhop", CrossInput::Key::Space}, // Walllhop
+    {"Wallwalk", CrossInput::Key::Numpad3}, // wallwalk
+    {"FPS-Drop", CrossInput::Key::Numpad4}, // wallwalk
 };
 
 inline unsigned short kb_layout;

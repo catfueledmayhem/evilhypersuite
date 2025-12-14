@@ -5,11 +5,16 @@
 #include "Speedglitch.hpp"
 #include "HHJ.hpp"
 #include "GearDesync.hpp"
+#include "WallhopAndWallwalk.hpp"
+#include "FPSDropper.hpp"
 
 inline void initMacros() {
     initSpeedglitch();
     initHHJ();
     initGearDesync();
+    initWallhop();
+    initWallwalk();
+    FpsDrop::Init();
 }
 
 inline void UpdateMacros() {
@@ -27,4 +32,12 @@ inline void UpdateMacros() {
     //if (enabled[13]) gearDesyncMacro();
     if (enabled[14]) FullGearDesync();
     if (enabled[15]) FloorBounceHighJump();
+    if (enabled[16]) wallhopMacro();
+    if (enabled[17]) wallwalkMacro();
+    if (enabled[18]) FpsDrop::Macro();
+}
+
+inline void CleanupMacros() {
+    cleanupWallhop();
+    cleanupWallwalk();
 }

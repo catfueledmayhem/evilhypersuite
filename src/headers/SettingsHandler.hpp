@@ -32,6 +32,7 @@ inline namespace SettingsHandler {
         j["cam_fix_active"] = cam_fix_active;
         j["roblox_fps"] = roblox_fps;
         j["kb_layout"] = kb_layout;
+        j["first_time"] = first_time;
 
         //-- Saves state
         for (int i = 0; i < sizeof(enabled) / sizeof(enabled[0]); i++) {
@@ -89,6 +90,9 @@ inline namespace SettingsHandler {
 
         if (j.contains("roblox_fps"))
             updateSpeedglitchFPS(j["roblox_fps"]);
+
+        if (j.contains("first_time"))
+            first_time = j["first_time"];
 
         if (j.contains("kb_layout"))
             kb_layout = j["kb_layout"];
