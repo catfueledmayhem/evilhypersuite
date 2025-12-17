@@ -9,6 +9,9 @@
 #include "LagSwitch.hpp"
 #include "UserInterface.hpp"
 #include "imgui.h"
+#include "hsscript.hpp"
+#include "hsscriptman.hpp"
+#include "ImportedScriptsUI.hpp"
 
 using json = nlohmann::json;
 const char* SETTINGS_FILE = "saved.json";
@@ -53,6 +56,16 @@ inline namespace SettingsHandler {
         j["rainbowValue"] = rainbowValue;
         j["resizable_window"] = resizable_window;
         j["decorated_window"] = decorated_window;
+
+        //-- Save imported scripts
+        j["imported_scripts"] = json::array();
+        for (const auto& macro : ImportedMacros) {
+            json scriptData;
+            scriptData["path"] = macro.filePath;
+            scriptData["keybind"] = macro.keybind;
+            scriptData["enabled"] = macro.enabled;
+            j["imported_scripts"].push_back(scriptData);
+        }
 
         std::ofstream file(SETTINGS_FILE);
         file << j.dump(4);
@@ -99,7 +112,7 @@ inline namespace SettingsHandler {
 
         // -- Load enabled array
         if (j.contains("enabled")) {
-            for (int i = 0; i < 12; i++) {
+            for (int i = 0; i < sizeof(enabled) / sizeof(enabled[0]); i++) {
                 std::string idx = std::to_string(i);
                 if (j["enabled"].contains(idx)) {
                     enabled[i] = j["enabled"][idx].get<bool>();
@@ -135,6 +148,18 @@ inline namespace SettingsHandler {
         if (j.contains("decorated_window")) {
             decorated_window = j["decorated_window"];
             lastDecorated = decorated_window;
+        }
+
+        if (j.contains("imported_scripts")) {
+            for (const auto& scriptData : j["imported_scripts"]) {
+                std::string path = scriptData.value("path", "");
+                std::string keybind = scriptData.value("keybind", "");
+                bool enabled = scriptData.value("enabled", false);
+
+                if (!path.empty()) {
+                    importScriptFromSavedData(path, keybind, enabled);
+                }
+            }
         }
     }
 }

@@ -10,7 +10,7 @@ License: MIT
 Description:
 -------------
 CrossInput is a lightweight, header-only C++ library for handling keyboard
-and mouse input in a cross-platform manner. It is designed primarily for 
+and mouse input in a cross-platform manner. It is designed primarily for
 macro or automation tools. The library currently supports:
 
     - Windows (via GetAsyncKeyState + low-level keyboard hook + SendInput)
@@ -28,9 +28,9 @@ Features:
 - Move the mouse relative to its current position.
 - Map between human-readable keys and system key codes.
 - Thread-safe key state tracking.
-- Header-only, cross-platform, no external dependencies (besides standard 
+- Header-only, cross-platform, no external dependencies (besides standard
   C++ and system headers).
-- Designed for simplicity and quick integration into macros or automation 
+- Designed for simplicity and quick integration into macros or automation
   scripts.
 
 Usage Example (C++):
@@ -84,7 +84,7 @@ Notes:
 #include <iostream>
 
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN 
+#define WIN32_LEAN_AND_MEAN
     #include <windows.h>
 #else
     #include <linux/input-event-codes.h>
@@ -106,30 +106,30 @@ public:
         M = 0x4D, N = 0x4E, O = 0x4F, P = 0x50, Q = 0x51, R = 0x52,
         S = 0x53, T = 0x54, U = 0x55, V = 0x56, W = 0x57, X = 0x58,
         Y = 0x59, Z = 0x5A,
-        
+
         // Numbers
         Num0 = 0x30, Num1 = 0x31, Num2 = 0x32, Num3 = 0x33, Num4 = 0x34,
         Num5 = 0x35, Num6 = 0x36, Num7 = 0x37, Num8 = 0x38, Num9 = 0x39,
-        
+
         // Function keys
         F1 = 0x70, F2 = 0x71, F3 = 0x72, F4 = 0x73, F5 = 0x74, F6 = 0x75,
         F7 = 0x76, F8 = 0x77, F9 = 0x78, F10 = 0x79, F11 = 0x7A, F12 = 0x7B,
-        
+
         // Special keys
         Space = 0x20, Enter = 0x0D, Tab = 0x09, Escape = 0x1B,
         Backspace = 0x08, Delete = 0x2E, Insert = 0x2D,
-        
+
         // Modifiers
         LShift = 0xA0, RShift = 0xA1, LCtrl = 0xA2, RCtrl = 0xA3,
         LAlt = 0xA4, RAlt = 0xA5,
-        
+
         // Arrow keys
         Left = 0x25, Up = 0x26, Right = 0x27, Down = 0x28,
-        
+
         // Mouse buttons
         LMB = 0x01, RMB = 0x02, MMB = 0x04,
         Mouse4 = 0x05, Mouse5 = 0x06,
-        
+
         // Brackets
         LeftBracket = 0xDB, RightBracket = 0xDD,
 
@@ -204,7 +204,7 @@ public:
     // Initialize the input system
     bool init() {
         if (m_initialized) return true;
-        
+
 #ifdef _WIN32
         return initWindows();
 #else
@@ -215,19 +215,19 @@ public:
     // Cleanup resources
     void cleanup() {
         if (!m_initialized) return;
-        
+
         m_running = false;
-        
+
         if (m_listenerThread.joinable()) {
             m_listenerThread.join();
         }
-        
+
 #ifdef _WIN32
         cleanupWindows();
 #else
         cleanupLinux();
 #endif
-        
+
         m_initialized = false;
     }
 
@@ -289,14 +289,14 @@ public:
     // Get human-readable key name
     std::string getKeyName(Key key) {
         unsigned int code = static_cast<unsigned int>(key);
-        
+
         static std::unordered_map<unsigned int, std::string> names = {
             {0x41, "A"}, {0x42, "B"}, {0x43, "C"}, {0x44, "D"}, {0x45, "E"},
             {0x46, "F"}, {0x47, "G"}, {0x48, "H"}, {0x49, "I"}, {0x4A, "J"},
             {0x4B, "K"}, {0x4C, "L"}, {0x4D, "M"}, {0x4E, "N"}, {0x4F, "O"},
             {0x50, "P"}, {0x51, "Q"}, {0x52, "R"}, {0x53, "S"}, {0x54, "T"},
             {0x55, "U"}, {0x56, "V"}, {0x57, "W"}, {0x58, "X"}, {0x59, "Y"},
-            {0x5A, "Z"}, 
+            {0x5A, "Z"},
             {0x30, "0"}, {0x31, "1"}, {0x32, "2"}, {0x33, "3"}, {0x34, "4"},
             {0x35, "5"}, {0x36, "6"}, {0x37, "7"}, {0x38, "8"}, {0x39, "9"},
             {0x20, "Space"}, {0x0D, "Enter"}, {0x09, "Tab"},
@@ -304,13 +304,13 @@ public:
             {0x70, "F1"}, {0x71, "F2"}, {0x72, "F3"},
             {0x73, "F4"}, {0x74, "F5"}, {0x75, "F6"}, {0x76, "F7"},
             {0x77, "F8"}, {0x78, "F9"}, {0x79, "F10"}, {0x7A, "F11"},
-            {0x7B, "F12"}, 
-            {0xDB, "["}, {0xDD, "]"}, 
-            {0xBF, "/"}, {0xBA, ";"}, 
-            {0xBD, "-"}, {0xBB, "="}, {0xDC, "\\"}, 
+            {0x7B, "F12"},
+            {0xDB, "["}, {0xDD, "]"},
+            {0xBF, "/"}, {0xBA, ";"},
+            {0xBD, "-"}, {0xBB, "="}, {0xDC, "\\"},
             {0xDE, "'"}, {0xBC, ","}, {0xBE, "."}, {0xC0, "`"},
             {0x25, "Left"}, {0x26, "Up"}, {0x27, "Right"}, {0x28, "Down"},
-            {0xA0, "LShift"}, {0xA1, "RShift"}, 
+            {0xA0, "LShift"}, {0xA1, "RShift"},
             {0xA2, "LCtrl"}, {0xA3, "RCtrl"},
             {0xA4, "LAlt"}, {0xA5, "RAlt"},
             // Mouse buttons
@@ -330,7 +330,7 @@ public:
             // Windows key
             {0x5B, "LWin"}, {0x5C, "RWin"},
         };
-        
+
         if (names.count(code)) {
             return names[code];
         }
@@ -365,76 +365,77 @@ private:
 #ifdef _WIN32
     // ==================== WINDOWS IMPLEMENTATION ====================
     HHOOK m_hookHandle;
-    
+
     static CrossInput* s_instance;  // Declaration only
-    
+
     static LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         if (nCode == HC_ACTION && s_instance) {
             const KBDLLHOOKSTRUCT* pkbhs = reinterpret_cast<const KBDLLHOOKSTRUCT*>(lParam);
-            
+
             // Only track non-injected keys
             if ((pkbhs->flags & LLKHF_INJECTED) == 0) {
                 bool isDown = (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN);
-                
+
                 std::lock_guard<std::mutex> lock(s_instance->m_keyMutex);
                 s_instance->m_keyStates[pkbhs->vkCode] = isDown;
             }
         }
         return CallNextHookEx(s_instance->m_hookHandle, nCode, wParam, lParam);
     }
-    
+
     bool initWindows() {
         s_instance = this;
-        
-        // Install keyboard hook
-        m_hookHandle = SetWindowsHookEx(
-            WH_KEYBOARD_LL, 
-            keyboardHookProc, 
-            GetModuleHandle(NULL), 
-            0
-        );
-        
-        if (!m_hookHandle) {
-            std::cerr << "Failed to install keyboard hook. Error: " << GetLastError() << std::endl;
+        m_running = true;
+
+        // Install hook in the message pump thread
+        m_listenerThread = std::thread([this]() {
+            m_hookHandle = SetWindowsHookEx(WH_KEYBOARD_LL, keyboardHookProc,
+                                            GetModuleHandle(NULL), 0);
+            if (!m_hookHandle) {
+                std::cerr << "Failed to install keyboard hook. Error: " << GetLastError() << std::endl;
+                m_running = false;
+                return;
+            }
+            std::cout << "Windows keyboard hook installed" << std::endl;
+            windowsEventLoop();
+
+            if (m_hookHandle) {
+                UnhookWindowsHookEx(m_hookHandle);
+                m_hookHandle = NULL;
+            }
+        });
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        if (!m_running) {
+            if (m_listenerThread.joinable()) m_listenerThread.join();
             return false;
         }
-        
-        m_running = true;
-        
-        // Start message pump thread for the hook
-        m_listenerThread = std::thread([this]() { 
-            windowsEventLoop(); 
-        });
-        
+
         m_initialized = true;
-        std::cout << "Windows input initialized (using GetAsyncKeyState + hook)" << std::endl;
         return true;
     }
-    
+
     void cleanupWindows() {
-        if (m_hookHandle) {
-            UnhookWindowsHookEx(m_hookHandle);
-            m_hookHandle = NULL;
-        }
         s_instance = nullptr;
     }
-    
+
     void windowsEventLoop() {
         MSG msg;
-        // Process messages to keep hook alive
         while (m_running) {
-            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+            if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+                if (msg.message == WM_QUIT) break;
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
-    
+
     void holdKeyWindows(unsigned int vkCode) {
         INPUT input = {0};
         input.type = INPUT_KEYBOARD;
-        
+
         // For the slash key (and other OEM keys), use scan code
         if (vkCode == 0xBF) {  // VK_OEM_2 (slash key)
             input.ki.wScan = 0x35;  // Hardware scan code for /
@@ -444,14 +445,14 @@ private:
             input.ki.wScan = MapVirtualKey(vkCode, MAPVK_VK_TO_VSC);
             input.ki.dwFlags = 0;
         }
-        
+
         SendInput(1, &input, sizeof(INPUT));
     }
 
     void releaseKeyWindows(unsigned int vkCode) {
         INPUT input = {0};
         input.type = INPUT_KEYBOARD;
-        
+
         // For the slash key (and other OEM keys), use scan code
         if (vkCode == 0xBF) {  // VK_OEM_2 (slash key)
             input.ki.wScan = 0x35;  // Hardware scan code for /
@@ -461,10 +462,10 @@ private:
             input.ki.wScan = MapVirtualKey(vkCode, MAPVK_VK_TO_VSC);
             input.ki.dwFlags = KEYEVENTF_KEYUP;
         }
-        
+
         SendInput(1, &input, sizeof(INPUT));
     }
-    
+
     void moveMouseWindows(int dx, int dy) {
         INPUT input = {0};
         input.type = INPUT_MOUSE;
@@ -482,24 +483,24 @@ private:
             std::cerr << "Character '" << c << "' not available in keyboard layout" << std::endl;
             return;
         }
-        
+
         BYTE keyCode = LOBYTE(vk);
         BYTE shiftState = HIBYTE(vk);
-        
+
         // Press shift if needed
         bool needShift = (shiftState & 1);
         bool needCtrl = (shiftState & 2);
         bool needAlt = (shiftState & 4);
-        
+
         if (needShift) holdKeyWindows(VK_SHIFT);
         if (needCtrl) holdKeyWindows(VK_CONTROL);
         if (needAlt) holdKeyWindows(VK_MENU);
-        
+
         // Press the key
         holdKeyWindows(keyCode);
         std::this_thread::sleep_for(std::chrono::milliseconds(delayMs));
         releaseKeyWindows(keyCode);
-        
+
         // Release modifiers
         if (needAlt) releaseKeyWindows(VK_MENU);
         if (needCtrl) releaseKeyWindows(VK_CONTROL);
@@ -508,7 +509,7 @@ private:
 
     Key getCurrentPressedKeyWindows(int timeout_ms) {
         auto startTime = std::chrono::steady_clock::now();
-        
+
         do {
             // Check all possible virtual key codes
             for (unsigned int vk = 0x01; vk <= 0xFE; vk++) {
@@ -521,13 +522,13 @@ private:
                     return static_cast<Key>(vk);
                 }
             }
-            
+
             if (timeout_ms == 0) {
                 break; // No wait, check once
             }
-            
+
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            
+
             if (timeout_ms > 0) {
                 auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::steady_clock::now() - startTime
@@ -536,16 +537,16 @@ private:
                     break;
                 }
             }
-            
+
         } while (timeout_ms != 0);
-        
+
         return static_cast<Key>(0); // No key pressed
     }
 #else
     // ==================== LINUX IMPLEMENTATION ====================
     int m_uinputFd;
     std::vector<int> m_inputFds;
-    
+
     bool initLinux() {
         // Initialize uinput for output
         m_uinputFd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
@@ -553,7 +554,7 @@ private:
             std::cout << "Failed to open /dev/uinput. Run with sudo!" << std::endl;
             return true;
         }
-        
+
         struct uinput_setup setup;
         memset(&setup, 0, sizeof(setup));
         strcpy(setup.name, "CrossInput Virtual Device");
@@ -561,13 +562,13 @@ private:
         setup.id.vendor = 0x1234;
         setup.id.product = 0x5678;
         setup.id.version = 1;
-        
+
         // Enable key events
         ioctl(m_uinputFd, UI_SET_EVBIT, EV_KEY);
         for (int i = 0; i < 256; ++i) {
             ioctl(m_uinputFd, UI_SET_KEYBIT, i);
         }
-        
+
         // Enable mouse button events
         ioctl(m_uinputFd, UI_SET_KEYBIT, BTN_LEFT);
         ioctl(m_uinputFd, UI_SET_KEYBIT, BTN_RIGHT);
@@ -579,38 +580,38 @@ private:
         ioctl(m_uinputFd, UI_SET_EVBIT, EV_REL);
         ioctl(m_uinputFd, UI_SET_RELBIT, REL_X);
         ioctl(m_uinputFd, UI_SET_RELBIT, REL_Y);
-        
+
         // Create device
         ioctl(m_uinputFd, UI_DEV_SETUP, &setup);
         ioctl(m_uinputFd, UI_DEV_CREATE);
-        
+
         // Start input listener thread
         m_running = true;
         m_listenerThread = std::thread([this]() { linuxEventLoop(); });
-        
+
         m_initialized = true;
         std::cout << "Linux input initialized" << std::endl;
         return true;
     }
-    
+
     void cleanupLinux() {
         if (m_uinputFd >= 0) {
             ioctl(m_uinputFd, UI_DEV_DESTROY);
             close(m_uinputFd);
             m_uinputFd = -1;
         }
-        
+
         for (int fd : m_inputFds) {
             close(fd);
         }
         m_inputFds.clear();
     }
-    
+
     void linuxEventLoop() {
         // Open all input devices
         DIR* dir = opendir("/dev/input");
         if (!dir) return;
-        
+
         struct dirent* ent;
         while ((ent = readdir(dir)) != nullptr) {
             if (strncmp(ent->d_name, "event", 5) == 0) {
@@ -622,7 +623,7 @@ private:
             }
         }
         closedir(dir);
-        
+
         struct input_event ev;
         while (m_running) {
             for (int fd : m_inputFds) {
@@ -642,7 +643,7 @@ private:
                         else if (ev.code == BTN_MIDDLE) winCode = 0x04; // MMB
                         else if (ev.code == BTN_SIDE) winCode = 0x05;   // Mouse4
                         else if (ev.code == BTN_EXTRA) winCode = 0x06;  // Mouse5
-                        
+
                         if (winCode != 0) {
                             std::lock_guard<std::mutex> lock(m_keyMutex);
                             m_keyStates[winCode] = (ev.value != 0);
@@ -653,17 +654,17 @@ private:
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
-    
+
     void emitEvent(int type, int code, int val) {
         if (m_uinputFd < 0) return;
-        
+
         struct input_event ie;
         memset(&ie, 0, sizeof(ie));
         ie.type = type;
         ie.code = code;
         ie.value = val;
         write(m_uinputFd, &ie, sizeof(ie));
-        
+
         // Sync event
         memset(&ie, 0, sizeof(ie));
         ie.type = EV_SYN;
@@ -671,15 +672,15 @@ private:
         ie.value = 0;
         write(m_uinputFd, &ie, sizeof(ie));
     }
-    
+
     void holdKeyLinux(unsigned int evdevCode) {
         emitEvent(EV_KEY, evdevCode, 1);
     }
-    
+
     void releaseKeyLinux(unsigned int evdevCode) {
         emitEvent(EV_KEY, evdevCode, 0);
     }
-    
+
     void moveMouseLinux(int dx, int dy) {
         emitEvent(EV_REL, REL_X, dx);
         emitEvent(EV_REL, REL_Y, dy);
@@ -691,7 +692,7 @@ private:
             unsigned int keyCode;
             bool needShift;
         };
-        
+
         static std::unordered_map<char, KeyMapping> charMap = {
             // Lowercase letters
             {'a', {KEY_A, false}}, {'b', {KEY_B, false}}, {'c', {KEY_C, false}},
@@ -703,7 +704,7 @@ private:
             {'s', {KEY_S, false}}, {'t', {KEY_T, false}}, {'u', {KEY_U, false}},
             {'v', {KEY_V, false}}, {'w', {KEY_W, false}}, {'x', {KEY_X, false}},
             {'y', {KEY_Y, false}}, {'z', {KEY_Z, false}},
-            
+
             // Uppercase letters
             {'A', {KEY_A, true}}, {'B', {KEY_B, true}}, {'C', {KEY_C, true}},
             {'D', {KEY_D, true}}, {'E', {KEY_E, true}}, {'F', {KEY_F, true}},
@@ -714,19 +715,19 @@ private:
             {'S', {KEY_S, true}}, {'T', {KEY_T, true}}, {'U', {KEY_U, true}},
             {'V', {KEY_V, true}}, {'W', {KEY_W, true}}, {'X', {KEY_X, true}},
             {'Y', {KEY_Y, true}}, {'Z', {KEY_Z, true}},
-            
+
             // Numbers
             {'0', {KEY_0, false}}, {'1', {KEY_1, false}}, {'2', {KEY_2, false}},
             {'3', {KEY_3, false}}, {'4', {KEY_4, false}}, {'5', {KEY_5, false}},
             {'6', {KEY_6, false}}, {'7', {KEY_7, false}}, {'8', {KEY_8, false}},
             {'9', {KEY_9, false}},
-            
+
             // Shifted numbers (symbols)
             {'!', {KEY_1, true}}, {'@', {KEY_2, true}}, {'#', {KEY_3, true}},
             {'$', {KEY_4, true}}, {'%', {KEY_5, true}}, {'^', {KEY_6, true}},
             {'&', {KEY_7, true}}, {'*', {KEY_8, true}}, {'(', {KEY_9, true}},
             {')', {KEY_0, true}},
-            
+
             // Special characters
             {' ', {KEY_SPACE, false}}, {'\n', {KEY_ENTER, false}}, {'\t', {KEY_TAB, false}},
             {'-', {KEY_MINUS, false}}, {'_', {KEY_MINUS, true}},
@@ -752,31 +753,31 @@ private:
             {'`', {KEY_GRAVE, false}}, {'~', {KEY_GRAVE, true}}
 
         };
-        
+
         auto it = charMap.find(c);
         if (it == charMap.end()) {
             std::cerr << "Character '" << c << "' not mapped for Linux" << std::endl;
             return;
         }
-        
+
         KeyMapping mapping = it->second;
-        
+
         // Press shift if needed
         if (mapping.needShift) {
             holdKeyLinux(KEY_LEFTSHIFT);
         }
-        
+
         // Press the key
         holdKeyLinux(mapping.keyCode);
         std::this_thread::sleep_for(std::chrono::milliseconds(delayMs));
         releaseKeyLinux(mapping.keyCode);
-        
+
         // Release shift
         if (mapping.needShift) {
             releaseKeyLinux(KEY_LEFTSHIFT);
         }
     }
-    
+
     // Convert Windows VK codes to evdev codes
     unsigned int toEvdevCode(unsigned int vkCode) {
         static std::unordered_map<unsigned int, unsigned int> vkToEvdev = {
@@ -837,13 +838,13 @@ private:
             {0x08, KEY_BACKSPACE}, {0x2E, KEY_DELETE}, {0x2D, KEY_INSERT},
 
         };
-        
+
         if (vkToEvdev.count(vkCode)) {
             return vkToEvdev[vkCode];
         }
         return vkCode;
     }
-    
+
     // Convert evdev codes back to Windows VK codes
     unsigned int fromEvdevCode(unsigned int evdevCode) {
         static std::unordered_map<unsigned int, unsigned int> evdevToVk = {
@@ -904,7 +905,7 @@ private:
             {KEY_BACKSPACE, 0x08}, {KEY_DELETE, 0x2E}, {KEY_INSERT, 0x2D},
 
         };
-        
+
 
         if (evdevToVk.count(evdevCode)) {
             return evdevToVk[evdevCode];
@@ -912,18 +913,18 @@ private:
         return evdevCode;
     }
 
-    
+
     Key getCurrentPressedKeyLinux(int timeout_ms) {
         auto startTime = std::chrono::steady_clock::now();
-        
+
         do {
             unsigned int pressedKeyCode = 0;
             bool keyFound = false;
-            
+
             // Check for pressed keys in a scoped lock
             {
                 std::lock_guard<std::mutex> lock(m_keyMutex);
-                
+
                 // Find the first pressed key
                 for (const auto& pair : m_keyStates) {
                     if (pair.second) {
@@ -933,28 +934,28 @@ private:
                     }
                 }
             } // Lock is released here
-            
+
             // If we found a pressed key, wait for it to be released
             if (keyFound) {
                 bool released = false;
                 while (!released) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                    
+
                     // Check if key is still pressed
                     std::lock_guard<std::mutex> lock(m_keyMutex);
                     auto it = m_keyStates.find(pressedKeyCode);
                     released = (it == m_keyStates.end() || !it->second);
                 }
-                
+
                 return static_cast<Key>(pressedKeyCode);
             }
-            
+
             if (timeout_ms == 0) {
                 break; // No wait, check once
             }
-            
+
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            
+
             if (timeout_ms > 0) {
                 auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::steady_clock::now() - startTime
@@ -963,9 +964,9 @@ private:
                     break;
                 }
             }
-            
+
         } while (timeout_ms != 0);
-        
+
         return static_cast<Key>(0); // No key pressed
     }
 

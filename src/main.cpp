@@ -42,17 +42,36 @@
 #include "LoadTextures.hpp"
 #include "SettingsHandler.hpp"
 #include "GlobalBasicSettings.hpp"
+
+#include "hsscript.hpp"
+#include "hsscriptman.hpp"
+
 #include "imgui.h"
 #include "rlImGui.h"
 
 #include <iostream>
 #include <string>
 #include <thread>
+#include <vector>
 #include <cstdlib>
 #include <cstdio>
 #include <map>
+#include <cmath>
 
-int main() {
+int main(int argc, char* argv[]) {
+    // Default values
+#ifdef _WIN32
+    roblox_process_name = "RobloxPlayerBeta.exe";
+    logzz::logs_folder_path = getRobloxAppDataDirectory() + "\\logs";
+    logzz::local_storage_folder_path = getRobloxAppDataDirectory() + "\\LocalStorage";
+#else
+    roblox_process_name = "sober";
+    logzz::logs_folder_path = getRobloxAppDataDirectory() + "/logs";
+    logzz::local_storage_folder_path = getRobloxAppDataDirectory() + "/LocalStorage";
+#endif
+    // getting the username, userid, display name etc.. from appstorage.json
+    logzz::load_user_info();
+
 #if defined(__linux__)
     //Fix for unable to open display ":0" on wayland
     runXhostPlus();
@@ -68,31 +87,15 @@ int main() {
     screen_width = GetScreenWidth();
     screen_height = GetScreenHeight();
 
-    // Default values
-#ifdef _WIN32
-    roblox_process_name = "RobloxPlayerBeta.exe";
-    Image icon = LoadImage("resources/logo.png");
-    SetWindowIcon(icon);                           // Sets taskbar + title bar icon
-    UnloadImage(icon);                             // Free image memory
-    logzz::logs_folder_path = getRobloxAppDataDirectory() + "\\logs";
-    logzz::local_storage_folder_path = getRobloxAppDataDirectory() + "\\LocalStorage";
-#else
-    roblox_process_name = "sober";
-    logzz::logs_folder_path = getRobloxAppDataDirectory() + "/logs";
-    logzz::local_storage_folder_path = getRobloxAppDataDirectory() + "/LocalStorage";
-#endif
-
     kb_layout = 0;
     SetTargetFPS(60);
     //-------- LOADING THE FREAKING SETTINGS
     SettingsHandler::LoadSettings();
 
-    // getting the username, userid, display name etc.. from appstorage.json
-    logzz::load_user_info();
-
     //Initializes the user interface.
     initUI();
     LoadAllSprites();
+
     // For globalbasicsettings
     if (GlobalBasicSettingsFile == "empty") setGBSFileDirectory();
 
@@ -108,6 +111,9 @@ int main() {
     initMacros();
     // No window border for windows :p
 #ifdef _WIN32
+    Image icon = LoadImage("resources/logo.png");
+    SetWindowIcon(icon);                           // Sets taskbar + title bar icon
+    UnloadImage(icon);                             // Free image memory
     if (!decorated_window) SetWindowState(FLAG_WINDOW_UNDECORATED);
 #endif
 

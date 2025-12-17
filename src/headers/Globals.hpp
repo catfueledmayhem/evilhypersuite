@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #ifndef NOMINMAX
@@ -34,6 +35,7 @@
 #include "imgui.h"
 #include "netctrl.hpp"
 #include "inpctrl.hpp"
+#include "hsscript.hpp"
 
 // Inner-workings
 inline netctrl::NetCtrl* g_ctrl = nullptr;
@@ -45,6 +47,7 @@ inline bool elevationFailed = false;
 inline bool decorated_window = false;
 inline bool resizable_window = false;
 inline bool windowOnTop = false;
+static std::string selectedimporthssfile;
 
 inline bool lastDecorated = decorated_window;
 inline bool lastResizable = resizable_window;

@@ -37,6 +37,7 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
+#include <stdlib.h>
 #include <algorithm>
 #include "Globals.hpp"
 #include "inpctrl.hpp"
@@ -361,4 +362,12 @@ inline unsigned short GetIDFromCodeName(std::string CodeName) {
     } else if (CodeName == "FPS-Drop") {
         return 18;
     } else return 2000;
+}
+
+inline void clearConsole() {
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
 }

@@ -15,7 +15,8 @@ SRCS = $(wildcard src/*.cpp) \
        include/imgui/imgui_tables.cpp \
        include/imgui/imgui_widgets.cpp \
        include/rlImGui/rlImGui.cpp \
-       include/pugixml/pugixml.cpp
+       include/pugixml/pugixml.cpp \
+       include/ImGuiFileDialog/ImGuiFileDialog.cpp
 
 # Include directories
 INCLUDES = -I./include \
@@ -23,14 +24,16 @@ INCLUDES = -I./include \
            -I./src/headers \
            -I./include/imgui \
            -I./include/rlImGui \
-           -I./include/pugixml
+           -I./include/pugixml \
+           -I./include/ImGuiFileDialog
 
 # -------------------------------------------------------------------
 # Linux build
 # -------------------------------------------------------------------
 LINUX_OBJ_DIR = out/linux
 LINUX_TARGET = build/linux/utility
-LINUX_LDFLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+LINUX_CXXFLAGS = -I./include/lua-5.4.2_linux/include
+LINUX_LDFLAGS = -lraylib -L./include/lua-5.4.2_linux -llua54 -lGL -lm -lpthread -ldl -lrt -lX11
 LINUX_OBJS = $(patsubst %.cpp,$(LINUX_OBJ_DIR)/%.o,$(SRCS))
 LINUX_DEPS = $(LINUX_OBJS:.o=.d)
 
@@ -51,7 +54,7 @@ $(LINUX_TARGET): $(LINUX_OBJS)
 $(LINUX_OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	@echo "Compiling $<..."
-	@$(CXX) $(CXXFLAGS) $(INCLUDES) -MMD -MP -c $< -o $@
+	@$(CXX) $(CXXFLAGS) $(LINUX_CXXFLAGS) $(INCLUDES) -MMD -MP -c $< -o $@
 
 # Include dependency files (suppresses errors if they don't exist yet)
 -include $(LINUX_DEPS)
@@ -63,9 +66,9 @@ WIN_OBJ_DIR = out/win64
 WIN_TARGET = build/win64/utility.exe
 WIN_CXX_BASE = x86_64-w64-mingw32-g++
 WIN_CXX := $(shell command -v ccache >/dev/null 2>&1 && echo "ccache $(WIN_CXX_BASE)" || echo "$(WIN_CXX_BASE)")
-WIN_CXXFLAGS = -std=c++17 -O2 -Wall -Wextra $(INCLUDES) -I./include/raylibWin64/include
-WIN_LDFLAGS = -L./include/raylibWin64/lib -static -lraylib -lopengl32 -lgdi32 -lwinmm \
-              -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -mwindows -lshell32 -lpthread -Wl,-Bdynamic
+WIN_CXXFLAGS = -std=c++17 -O2 -Wall -Wextra $(INCLUDES) -I./include/raylibWin64/include -I./include/lua-5.4.2_win64/include
+WIN_LDFLAGS = -L./include/raylibWin64/lib -L./include/lua-5.4.2_win64 -static -lraylib -llua54 -lopengl32 -lgdi32 -lwinmm \
+              -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic -mwindows -lshell32
 WIN_ICON = resources/icon.o
 WIN_MANIFEST = resources/app.res
 WIN_OBJS = $(patsubst %.cpp,$(WIN_OBJ_DIR)/%.o,$(SRCS))

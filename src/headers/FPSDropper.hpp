@@ -1,5 +1,6 @@
 #pragma once
 #include "Globals.hpp"
+#include "Helper.hpp"
 #include "procctrl.hpp"
 
 namespace FpsDrop {
@@ -21,7 +22,7 @@ namespace FpsDrop {
 
             // Calculate timings
             int ft = 1000 / target_fps;
-            int current_user_ft = 1000 / 60;
+            int current_user_ft = (1000.0 / 60.0) * 0.7; // ~11.67 ms;
             int freeze_time = ft - current_user_ft;
 
             if (freeze_time > 0) {

@@ -282,14 +282,3 @@ inline void FloorBounceHighJump() {
         log("Floor bounce high jump finished");
     }
 }
-
-inline void FPSDrop() {
-    bool key_pressed = input.isKeyPressed(Binds["FPS-Drop"]);
-    if (key_pressed && !events[18]) {
-        events[18] = true;
-        log("FPS drop triggered");
-
-        events[18] = false;
-        log("FPS drop disabled");
-    }
-}

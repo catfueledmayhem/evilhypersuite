@@ -3,15 +3,19 @@
 #include "LoadTextures.hpp"
 #include "imgui.h"
 #include "rlImGui.h"
+#include "ImGuiFileDialog.h"
+#include "FPSDropper.hpp"
 #include "inpctrl.hpp"
 #include "Globals.hpp"
 #include "logzz.hpp"
 #include "Helper.hpp"
 #include "LagSwitch.hpp"
 #include "Speedglitch.hpp"
-#include "FPSDropper.hpp"
 #include "WallhopAndWallwalk.hpp"
 #include "GlobalBasicSettings.hpp"
+#include "hsscript.hpp"
+#include "hsscriptman.hpp"
+#include "ImportedScriptsUI.hpp"
 #include <string>
 
 ImVec4 orange = ImVec4(1.0f, 0.55f, 0.1f, 1.0f);
@@ -58,6 +62,11 @@ void applyThemeColor(const ImVec4& color) {
     style.Colors[ImGuiCol_FrameBg] = ImVec4(color.x * 0.75f, color.y * 1.0f, color.z * 1.0f, 1.0f);
     style.Colors[ImGuiCol_FrameBgHovered] = color;
     style.Colors[ImGuiCol_FrameBgActive] = ImVec4(color.x * 1.25f, color.y * 2.0f, color.z * 2.0f, 1.0f);
+
+    // --- Window title bars ---
+    style.Colors[ImGuiCol_TitleBg] = ImVec4(color.x * 0.8f, color.y * 0.8f, color.z * 0.8f, 1.0f);        // idle
+    style.Colors[ImGuiCol_TitleBgActive] = ImVec4(color.x, color.y, color.z, 1.0f);                        // active/focused
+    style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(color.x * 0.5f, color.y * 0.5f, color.z * 0.5f, 1.0f); // collapsed
 
     // --- Sliders ---
     style.Colors[ImGuiCol_SliderGrab] = ImVec4(color.x * 1.25f, color.y * 2.0f, color.z * 2.0f, 1.0f);
@@ -464,10 +473,12 @@ void UpdateUI() {
 
                 if (ImGui::Button(label, ImVec2(-1, 20))) {
                     // Toggle panel visibility
-                    if (current_option == label)
+                    if (current_option == label) {
                         current_option = "";
-                    else
+                    } else {
                         current_option = label;
+                        currentImportedOption = "";
+                    }
                 }
 
                 ImGui::PopStyleColor(3); // restore colors
@@ -520,6 +531,45 @@ void UpdateUI() {
             DrawOptionButton("Wallhop");
             DrawOptionButton("Wallwalk");
             DrawOptionButton("FPS Dropper");
+
+            // Draw all imported scripts
+            DrawAllImportedScripts(themeColor);
+
+            // Push custom colors for this button
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.6f, 0.9f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.7f, 1.0f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.5f, 0.8f, 1.0f));
+
+            if (ImGui::Button("+ Import script", ImVec2(-1, 20))) {
+                ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+                ImGui::SetNextWindowPos(ImVec2(0, 0));
+                IGFD::FileDialogConfig config;
+                config.path              = ".";
+                config.flags             = 0;
+                config.countSelectionMax = 1;
+
+                ImGuiFileDialog::Instance()->OpenDialog(
+                    "ChooseHSSfile",              // unique dialog key
+                    "Import a script. -- Only get them from trusted sources!",                 // visible window title
+                    ".hss",
+                    config                           // config struct
+                );
+            }
+
+            // Pop the colors back to normal
+            ImGui::PopStyleColor(3);
+
+            if (ImGuiFileDialog::Instance()->Display("ChooseHSSfile")) {
+                if (ImGuiFileDialog::Instance()->IsOk()) {
+                    std::string selectedFile = ImGuiFileDialog::Instance()->GetFilePathName();
+                    if (importScript(selectedFile)) {
+                        std::cout << "[UI] Successfully imported: " << selectedFile << std::endl;
+                    }
+                }
+                ImGuiFileDialog::Instance()->Close();
+            }
+
+
 
             ImGui::EndChild();
 
@@ -717,6 +767,8 @@ void UpdateUI() {
                 ImGui::PopStyleVar();
                 ImGui::SameLine();
                 ImGui::TextDisabled("(Current: %u)", FpsDrop::target_fps);
+            } else if (!currentImportedOption.empty()) {
+                DrawImportedScriptRightPanel();
             } else {
                 // Window padding and style
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15, 15));
