@@ -1,22 +1,8 @@
-<div align="center">
-
-<img width="128" height="128" alt="Roblox Hypersuite" src="https://github.com/user-attachments/assets/ae94bb93-313c-401a-981d-1b73a47b365b" />
+<img width="64" height="64" alt="logo" src="https://github.com/user-attachments/assets/ae94bb93-313c-401a-981d-1b73a47b365b" /> 
 
 # Roblox Hypersuite
 
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/3443o-o/roblox-hypersuite)](https://github.com/3443o-o/roblox-hypersuite/releases)
-[![GitHub downloads](https://img.shields.io/github/downloads/3443o-o/roblox-hypersuite/total)](https://github.com/3443o-o/roblox-hypersuite/releases)
-[![GitHub stars](https://img.shields.io/github/stars/3443o-o/roblox-hypersuite)](https://github.com/3443o-o/roblox-hypersuite/stargazers)
-[![GitHub issues](https://img.shields.io/github/issues/3443o-o/roblox-hypersuite)](https://github.com/3443o-o/roblox-hypersuite/issues)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-
-**A cross-platform multi-purpose Roblox utility with advanced scripting capabilities.**
-
-[Download](https://github.com/3443o-o/roblox-hypersuite/releases) • [Documentation](https://your-website.com/docs) • [Report Bug](https://github.com/3443o-o/roblox-hypersuite/issues)
-
-</div>
-
----
+A cross-platform multi-purpose Roblox utility with advanced scripting capabilities.
 
 ## Features
 
@@ -74,11 +60,11 @@ function onExecute()
 end
 ```
 
-See the [Scripting Documentation](https://your-website.com/docs/scripting) for complete API reference and examples.
+See the [Scripting Documentation](https://3443o-o.github.io/hypersuite/Docs) for complete API reference and examples.
 
 ## Installation
 
-1. Download the latest release from the [Releases](https://github.com/yourusername/roblox-hypersuite/releases) page
+1. Download the latest release from the [Releases](https://github.com/3443o-o/roblox-hypersuite/releases) page
 2. Extract the archive
 3. Run the executable
 4. (Optional) Place custom `.hss` scripts in the `scripts/` folder for automatic loading
@@ -120,7 +106,7 @@ sudo apt-get install mingw-w64
 
 **Build for Linux:**
 ```bash
-git clone https://github.com/3443o-o/roblox-hypersuite.git
+git clone https://github.com/yourusername/roblox-hypersuite.git
 cd roblox-hypersuite
 make linux
 # Output: build/linux/utility
@@ -184,7 +170,7 @@ make info           # Show source and object files
 - `HSPlayerName` - Current Roblox username
 - `HSPlayerDisplayName` - Current Roblox display name
 
-For complete documentation, visit the [scripting guide](https://your-website.com/docs/scripting).
+For complete documentation, visit the [scripting guide](https://3443o-o.github.io/hypersuite/Docs).
 
 ## Security Warning
 
@@ -231,9 +217,9 @@ This tool is for educational purposes only. Use at your own risk. The developers
 ## Support
 
 For support, documentation, and updates:
-- Visit our [website](https://3443o-o.github.io/hypersuite)
+- Visit our [website](https://3443o-o.github.io/hypersuite/)
 - Join our community [Discord/Forum]
-- Check the [documentation](https://3443o-o.github.io/hypersuite/Docs/)
+- Check the [documentation](https://3443o-o.github.io/hypersuite/Docs)
 
 ---
 
