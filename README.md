@@ -60,7 +60,7 @@ function onExecute()
 end
 ```
 
-See the [Scripting Documentation](https://3443e.gitlab.io/hypersuite/Docs/) for complete API reference and examples.
+See the [Scripting Documentation](https://3443e.gitlab.io/hypersuite/docs/) for complete API reference and examples.
 
 ## Installation
 
@@ -170,7 +170,7 @@ make info           # Show source and object files
 - `HSPlayerName` - Current Roblox username
 - `HSPlayerDisplayName` - Current Roblox display name
 
-For complete documentation, visit the [scripting guide](https://3443e.gitlab.io/hypersuite/Docs/).
+For complete documentation, visit the [scripting guide](https://3443e.gitlab.io/hypersuite/docs/).
 
 ## Security Warning
 
@@ -219,7 +219,7 @@ This tool is for educational purposes only. Use at your own risk. The developers
 For support, documentation, and updates:
 - Visit our [website](https://3443e.gitlab.io/hypersuite/)
 - Join our community [Discord/Forum](https://discord.gg/ePT8ncbV5X)
-- Check the [documentation](https://3443e.gitlab.io/hypersuite/Docs/)
+- Check the [documentation](https://3443e.gitlab.io/hypersuite/docs/)
 
 ---
 
