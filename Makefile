@@ -66,11 +66,12 @@ WIN_OBJ_DIR = out/win64
 WIN_TARGET = build/win64/utility.exe
 WIN_CXX_BASE = x86_64-w64-mingw32-g++
 WIN_CXX := $(shell command -v ccache >/dev/null 2>&1 && echo "ccache $(WIN_CXX_BASE)" || echo "$(WIN_CXX_BASE)")
-WIN_CXXFLAGS = -std=c++17 -O2 -Wall -Wextra $(INCLUDES) -I./include/raylibWin64/include -I./include/lua-5.4.2_win64/include
-WIN_LDFLAGS = -L./include/raylibWin64/lib -L./include/lua-5.4.2_win64 -static -lraylib -llua54 -lopengl32 -lgdi32 -lwinmm \
+WIN_CXXFLAGS = -std=c++17 -O2 -Wall -Wextra $(INCLUDES) -I./include/raylibWin64/include -I./include/lua-5.4.2_win64/include -I./include/WinDivert-2.2.2-A/include
+WIN_LDFLAGS = -L./include/raylibWin64/lib -L./include/lua-5.4.2_win64 -L./include/WinDivert-2.2.2-A/x64 \
+              -static -lraylib -lWinDivert -llua54 -lopengl32 -lgdi32 -lwinmm -lws2_32 \
               -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic -mwindows -lshell32
-WIN_ICON = resources/icon.o
-WIN_MANIFEST = resources/app.res
+WIN_ICON = alongside/resources/icon.o
+WIN_MANIFEST = alongside/resources/app.res
 WIN_OBJS = $(patsubst %.cpp,$(WIN_OBJ_DIR)/%.o,$(SRCS))
 WIN_DEPS = $(WIN_OBJS:.o=.d)
 

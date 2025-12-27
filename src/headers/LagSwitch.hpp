@@ -5,6 +5,7 @@
 #include "inpctrl.hpp"
 #include "Helper.hpp"
 #include "netctrl.hpp"
+#include "logzz.hpp"
 
 inline namespace LagSwitchNamespace {
     inline bool TrafficBlocked = false;
@@ -12,12 +13,6 @@ inline namespace LagSwitchNamespace {
     inline int LagTimeMilliseconds = 1;
     inline float PacketLossPercentage = 99.5f;
     inline bool customValuesAllowed = false;
-
-    // New: Ping increase mode
-    inline bool PingIncreaseMode = false;  // Toggle between lag switch and ping increase
-    inline int PingIncreaseAmount = 100;   // Default 100ms ping increase
-
-    // Note: Using global ctrl from Globals.hpp (no duplicate declaration)
 
     inline bool BlockTraffic() {
         if (TrafficBlocked) {
@@ -27,50 +22,36 @@ inline namespace LagSwitchNamespace {
 
         bool success = false;
 
-        // Check if we're in ping increase mode
-        if (PingIncreaseMode) {
-            log("Increasing ping by " + std::to_string(PingIncreaseAmount) + "ms");
-            success = ctrl.increasePing(PingIncreaseAmount);
-
-            if (success) {
-                log("[NetCtrl] Ping increased successfully");
-                TrafficBlocked = true;
-            } else {
-                log("[NetCtrl] Failed to increase ping");
-            }
-            return success;
+        // Set the server IP target
+        if (logzz::server_uses_udmux) {
+            ctrl.setTargetIP(logzz::server_udmux_address);
+        } else {
+            ctrl.setTargetIP(logzz::server_rcc_address);
         }
 
-        // Regular lag switch mode
-        log("Blocking outbound traffic for " + roblox_process_name);
+        // Configure prevent disconnect mode
+        ctrl.setPreventDisconnect(PreventDisconnection);
 
+        log("Blocking outbound traffic for " + roblox_process_name);
         int lag_ms = customValuesAllowed ? LagTimeMilliseconds : 1;
         float drop_pct = customValuesAllowed ? PacketLossPercentage : 99.5f;
 
         if (PreventDisconnection) {
-            // Apply lag + packet loss to prevent disconnection
+            // Apply lag + packet loss to prevent disconnection (uses WinDivert)
             log("[NetCtrl] Preventing disconnection: lag=" + std::to_string(lag_ms) +
                 "ms, drop=" + std::to_string(drop_pct) + "%");
-
             success = ctrl.lag(lag_ms, static_cast<double>(drop_pct));
-
-            if (success) {
-                log("[NetCtrl] Successfully applied lag/drop");
-                TrafficBlocked = true;
-            } else {
-                log("[NetCtrl] Failed to apply lag/drop");
-            }
         } else {
-            // Full block (100% packet loss)
-            log("[NetCtrl] Blocking all traffic (100% drop)");
+            // Full block with firewall rules (will disconnect)
+            log("[NetCtrl] Blocking all traffic (firewall mode - will disconnect)");
             success = ctrl.block();
+        }
 
-            if (success) {
-                log("[NetCtrl] Successfully blocked traffic");
-                TrafficBlocked = true;
-            } else {
-                log("[NetCtrl] Failed to block traffic");
-            }
+        if (success) {
+            log("[NetCtrl] Successfully applied network control");
+            TrafficBlocked = true;
+        } else {
+            log("[NetCtrl] Failed to apply network control");
         }
 
         return success;
@@ -108,5 +89,6 @@ inline void LagSwitch() {
             LagSwitchNamespace::BlockTraffic();
         }
     }
+
     events[4] = key_pressed;
 }

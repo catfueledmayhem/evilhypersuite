@@ -9,6 +9,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <regex>
 
 #include "json.hpp"
 using json = nlohmann::json;
@@ -26,6 +27,17 @@ using json = nlohmann::json;
 inline const unsigned long long CAMFIX_PLACEIDS[1] = {
     4597361034,
 };
+
+//-- REGEX PATTERNS!! very cool yes yes yes
+// Non-UDMUX: Connecting to <ip>:<port>
+static const std::regex rcc_only_regex(
+    R"(Connecting to ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):([0-9]+))"
+);
+
+// UDMUX: Connecting to UDMUX server <ip>:<port>, and RCC server <ip>:<port>
+static const std::regex udmux_regex(
+    R"(Connecting to UDMUX server ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):([0-9]+), and RCC server ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):([0-9]+))"
+);
 
 namespace fs = std::filesystem;
 
@@ -82,6 +94,7 @@ inline namespace logzz {
     inline state last_state = UNCHANGED_FILE;
     inline std::string logs_folder_path;
     inline std::string local_storage_folder_path;
+    inline std::string last_log_file;
     inline unsigned long long current_place_ID = 0;
     inline unsigned long long current_universe_ID = 0;
     inline unsigned long long current_user_ID = 0;
@@ -92,6 +105,11 @@ inline namespace logzz {
     inline bool game_uses_camfix_final;
     inline int game_uses_camfix_percentage;
     inline std::map<unsigned long long, int> calculated_placeIDs;
+    inline bool server_uses_udmux;
+    inline std::string server_udmux_address;
+    inline std::string server_rcc_address;
+    inline std::string udmux_port;
+    inline std::string rcc_port;
 
     inline state loop_handle() {
         logzz::last_state = logzz::current_state;
@@ -183,8 +201,16 @@ inline namespace logzz {
             return INVALID;
         }
 
+        last_log_file = most_recent_log_file;
+        std::smatch connecting_to_match;
+
         std::string last_place_id_string;
         std::string last_universe_id_string;
+        std::string last_udmux_server_address;
+        std::string last_rcc_server_address;
+        std::string last_udmux_port;
+        std::string last_rcc_port;
+
         int last_universe_id_line = 0;
         int last_place_id_line = 0;
         int in_lua_app_line = 0;
@@ -198,6 +224,8 @@ inline namespace logzz {
         int workspaceobby_line = 0;
         int towerword_line = 0;
         int playerscripts_line = 0;
+        int connectingtoudmux_line = 0;
+        int connectingtoline = 0;
 
         std::string current_line;
         int line = 0;
@@ -274,6 +302,40 @@ inline namespace logzz {
                 if (current_line.find("tower") != std::string::npos) {
                     towerword_line = line;
                 }
+                if (current_line.find("tower") != std::string::npos) {
+                    towerword_line = line;
+                }
+
+
+
+
+                // server IP fetching
+                if (current_line.find("Connecting to") != std::string::npos) {
+
+                    // Case 1: UDMUX + RCC
+                    if (std::regex_search(current_line, connecting_to_match, udmux_regex)) {
+
+                        last_udmux_server_address = connecting_to_match[1].str(); // UDMUX IP
+                        last_rcc_server_address   = connecting_to_match[3].str(); // RCC IP
+
+                        // ports
+                        last_udmux_port = connecting_to_match[2].str();
+                        last_rcc_port = connecting_to_match[4].str();
+                        connectingtoudmux_line = line;
+                    }
+
+                    // Case 2: RCC only (non-UDMUX)
+                    else if (std::regex_search(current_line, connecting_to_match, rcc_only_regex)) {
+
+                        last_udmux_server_address.clear(); // no UDMUX
+                        last_rcc_server_address = connecting_to_match[1].str();
+
+                        last_rcc_port = connecting_to_match[2].str();
+                        connectingtoline = line;
+                    }
+                }
+
+
             }
         } catch (const std::exception& e) {
             printf("[logzz] Error reading log file: %s\n", e.what());
@@ -325,6 +387,18 @@ inline namespace logzz {
             calculated_placeIDs[current_place_ID] = (int)((score / 300.0f) * 100);
         }
 
+        // ips
+        if (connectingtoudmux_line > last_place_id_line) {
+            server_uses_udmux = true;
+            server_udmux_address = last_udmux_server_address;
+            server_rcc_address = last_rcc_server_address;
+            rcc_port = last_rcc_port;
+            udmux_port = last_udmux_port;
+        } else if (connectingtoline > last_place_id_line) {
+            server_uses_udmux = false;
+            server_rcc_address = last_rcc_server_address;
+            rcc_port = last_rcc_port;
+        }
         return current_state;
     }
 

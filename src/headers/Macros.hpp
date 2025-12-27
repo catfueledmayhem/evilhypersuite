@@ -2,6 +2,68 @@
 #include "Globals.hpp"
 #include "Helper.hpp"
 
+#ifdef _WIN32
+#include "clipctrl.hpp"
+#endif
+
+inline namespace chat_handler {
+    inline void paste_text() {
+        input.holdKey(CrossInput::Key::LCtrl);
+        input.holdKey(CrossInput::Key::V);
+        std::this_thread::sleep_for(std::chrono::milliseconds(40));
+        input.releaseKey(CrossInput::Key::LCtrl);
+        input.releaseKey(CrossInput::Key::V);
+    }
+
+    inline void type_laugh() {
+#ifdef _WIN32
+        clipboard_set_text("/e laugh");
+        paste_text();
+#else
+        if (kb_layout == 1) {
+            typeSlashAzerty();
+            input.typeText("e lqugh");
+        } else {
+            input.typeText("/e laugh");
+        }
+#endif
+    }
+
+    inline void type_dance2() {
+#ifdef _WIN32
+        clipboard_set_text("/e dance2");
+        paste_text();
+#else
+        if (kb_layout == 1) {
+            typeSlashAzerty();
+            input.typeText("e dqnce");
+            input.holdKey(CrossInput::Key::LShift);
+            input.pressKey(CrossInput::Key::Num2);
+            input.releaseKey(CrossInput::Key::LShift);
+            std::this_thread::sleep_for(std::chrono::milliseconds(30));
+            input.pressKey(CrossInput::Key::Enter);
+        } else {
+            input.typeText("/e dance2");
+            input.pressKey(CrossInput::Key::Enter);
+        }
+#endif
+    }
+
+    inline void type_cheer() {
+#ifdef _WIN32
+        clipboard_set_text("/e cheer");
+        paste_text();
+#else
+        if (kb_layout == 1) {
+            typeSlashAzerty();
+            input.typeText("e cheer", 20);
+        } else {
+            input.typeText("/e cheer", 20);
+        }
+#endif
+    }
+};
+
 inline void freezeMacro() {
     bool key_pressed = input.isKeyPressed(Binds["Freeze"]);
 
@@ -25,13 +87,8 @@ inline void laughClip() {
 
         input.pressKey(ChatKey);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        chat_handler::type_laugh();
 
-        if (kb_layout == 1) {
-            typeSlashAzerty();
-            input.typeText("e lqugh");
-        } else {
-            input.typeText("/e laugh");
-        }
         input.pressKey(CrossInput::Key::Enter);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(248));
@@ -68,18 +125,9 @@ inline void extendedDanceClip() {
         input.pressKey(ChatKey);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-        if (kb_layout == 1) {
-            typeSlashAzerty();
-            input.typeText("e dqnce");
-            input.holdKey(CrossInput::Key::LShift);
-            input.pressKey(CrossInput::Key::Num2);
-            input.releaseKey(CrossInput::Key::LShift);
-            std::this_thread::sleep_for(std::chrono::milliseconds(30));
-            input.pressKey(CrossInput::Key::Enter);
-        } else {
-            input.typeText("/e dance2");
-            input.pressKey(CrossInput::Key::Enter);
-        }
+        chat_handler::type_dance2();
+
+        input.pressKey(CrossInput::Key::Enter);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(815));
 
@@ -110,14 +158,10 @@ inline void BuckeyClip() {
         input.pressKey(ChatKey);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-        if (kb_layout == 1) {
-            typeSlashAzerty();
-            input.typeText("e lqugh");
-        } else {
-            input.typeText("/e laugh");
-        }
+        chat_handler::type_laugh();
 
         input.pressKey(CrossInput::Key::Enter);
+
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
         // --- Space key ---
@@ -169,14 +213,10 @@ inline void DisableHeadCollision() {
         input.pressKey(ChatKey);
         std::this_thread::sleep_for(std::chrono::milliseconds(248));
 
-        if (kb_layout == 1) {
-            typeSlashAzerty();
-            input.typeText("e lqugh");
-        } else {
-            input.typeText("/e laugh");
-        }
+        chat_handler::type_laugh();
 
         input.pressKey(CrossInput::Key::Enter);
+
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
         input.holdKey(CrossInput::Key::LShift);
@@ -205,12 +245,7 @@ inline void NHCRoofClip() {
         input.pressKey(ChatKey);
         std::this_thread::sleep_for(std::chrono::milliseconds(248));
 
-        if (kb_layout == 1) {
-            typeSlashAzerty();
-            input.typeText("e cheer", 20);
-        } else {
-            input.typeText("/e cheer", 20);
-        }
+        chat_handler::type_cheer();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 

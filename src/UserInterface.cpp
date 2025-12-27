@@ -811,7 +811,7 @@ void UpdateUI() {
         if (ImGui::BeginTabItem("Lag-switch")) {
             ImGui::Text("Lag switch settings:");
             ImGui::Separator();
-            ImGui::Checkbox("Enabled", &enabled[4]);
+            ImGui::Checkbox("Enabled Keybind", &enabled[4]);
             ImGui::Text("Current keybind %s", input.getKeyName(Binds["Lag-switch"]).c_str());
 
             if (LagSwitchNamespace::TrafficBlocked == true) {
@@ -823,15 +823,11 @@ void UpdateUI() {
                 bindToMacro("Lag-switch");
             }
 
-            ImGui::Checkbox("Prevent disconnection (More stable to disable on windows)", &LagSwitchNamespace::PreventDisconnection);
-            ImGui::Checkbox("Ping increasor ", &LagSwitchNamespace::PingIncreaseMode);
-            if (LagSwitchNamespace::PingIncreaseMode) {
-                ImGui::InputInt("Ping increase amount (ms)", &LagSwitchNamespace::PingIncreaseAmount);
-            }
+            ImGui::Checkbox("Prevent disconnection", &LagSwitchNamespace::PreventDisconnection);
             ImGui::Checkbox("Allow advanced settings", &LagSwitchNamespace::customValuesAllowed);
             if (LagSwitchNamespace::customValuesAllowed) {
-                ImGui::SliderFloat("Packet pass %", &LagSwitchNamespace::PacketLossPercentage, 80.0f, 100.0f);
-                ImGui::InputInt("Lag Time (ms)", &LagSwitchNamespace::LagTimeMilliseconds);
+                ImGui::SliderFloat("Packet loss chance %", &LagSwitchNamespace::PacketLossPercentage, 0.0f, 100.0f);
+                ImGui::InputInt("Ping increase (ms)", &LagSwitchNamespace::LagTimeMilliseconds);
             }
 
             ImGui::EndTabItem();

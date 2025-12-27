@@ -459,8 +459,7 @@ int HSScript::lua_sleep(lua_State* L) {
 }
 
 int HSScript::lua_log(lua_State* L) {
-    const char* message = luaL_checkstring(L, 1);
-    std::cout << "[HSS] " << message << std::endl;
+    log(luaL_checkstring(L, 1));
     return 0;
 }
 

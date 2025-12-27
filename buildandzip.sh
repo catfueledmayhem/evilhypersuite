@@ -2,97 +2,128 @@
 set -e
 
 # =========================
-# Configurable file lists
+# Paths
 # =========================
-WINDOWS_REMOVE=("app.manifest" "app.rc" "app.res" "icon.o" "icon.rc" "icon.ico")
-LINUX_REMOVE=("app.manifest" "app.rc" "app.res" "fumble.exe" "icon.o" "icon.rc" "WinDivert.dll" "WinDivert64.sys" "icon.ico")
-
 BUILD_DIR="build"
 WIN_DIR="$BUILD_DIR/win64"
 LINUX_DIR="$BUILD_DIR/linux"
-RESOURCE_DIR="resources"
+
+ALONGSIDE_DIR="alongside"
+RESOURCE_SUBDIR="resources"
 
 # =========================
-# Helper function for timing
+# Resource definitions
+# =========================
+
+# Everything that goes into resources/
+COMMON_RESOURCES=(
+    "$ALONGSIDE_DIR/$RESOURCE_SUBDIR"
+)
+
+# Files placed next to the executable
+WIN_ALONGSIDE=(
+    "$ALONGSIDE_DIR/WinDivert.dll"
+    "$ALONGSIDE_DIR/WinDivert64.sys"
+)
+
+LINUX_ALONGSIDE=(
+    # Example:
+    # "$ALONGSIDE_DIR/libsomething.so"
+)
+
+# Exclusions (relative paths after copy)
+WINDOWS_EXCLUDE=(
+    "resources/app.manifest"
+    "resources/app.rc"
+    "resources/app.res"
+)
+
+LINUX_EXCLUDE=(
+    "resources/app.manifest"
+    "resources/app.rc"
+    "resources/app.res"
+)
+
+# =========================
+# Timing helpers
 # =========================
 timer_start=$(date +%s)
-function print_elapsed() {
+print_elapsed() {
     local start=$1
     local msg=$2
-    local now=$(date +%s)
-    local elapsed=$((now - start))
-    echo "$msg (took ${elapsed}s)"
+    echo "$msg (took $(( $(date +%s) - start ))s)"
 }
 
 # =========================
-# Build step
+# Build
 # =========================
 echo "============================"
-echo "Building LINUX target..."
+echo "Building Linux..."
 start=$(date +%s)
 make
 print_elapsed $start "Linux build finished"
-sleep 0.5
 
-echo "Building Win64 target..."
+echo "Building Windows..."
 start=$(date +%s)
 make windows
-print_elapsed $start "Win64 build finished"
-sleep 0.5
+print_elapsed $start "Windows build finished"
 
 # =========================
-# Copy resources
+# Prepare directories
 # =========================
 echo "============================"
-echo "Copying resources to build directories..."
-start=$(date +%s)
+echo "Preparing build directories..."
 mkdir -p "$WIN_DIR" "$LINUX_DIR"
-cp -r "$RESOURCE_DIR" "$WIN_DIR/"
-cp -r "$RESOURCE_DIR" "$LINUX_DIR/"
-print_elapsed $start "Resources copied"
-sleep 0.5
 
 # =========================
-# Remove unwanted resources
+# Copy common resources
 # =========================
-echo "Removing unwanted Linux resources..."
-start=$(date +%s)
-for f in "${LINUX_REMOVE[@]}"; do
-    TARGET="$LINUX_DIR/$RESOURCE_DIR/$f"
-    if [ -e "$TARGET" ]; then
-        rm -rf "$TARGET"
-        echo "  Removed $f from Linux build"
-    fi
+echo "Copying resources..."
+for r in "${COMMON_RESOURCES[@]}"; do
+    cp -r "$r" "$WIN_DIR/"
+    cp -r "$r" "$LINUX_DIR/"
 done
-print_elapsed $start "Linux cleanup finished"
-sleep 0.5
-
-echo "Removing unwanted Windows resources..."
-start=$(date +%s)
-for f in "${WINDOWS_REMOVE[@]}"; do
-    TARGET="$WIN_DIR/$RESOURCE_DIR/$f"
-    if [ -e "$TARGET" ]; then
-        rm -rf "$TARGET"
-        echo "  Removed $f from Windows build"
-    fi
-done
-print_elapsed $start "Windows cleanup finished"
-sleep 0.5
 
 # =========================
-# Zip the builds
+# Copy alongside files
+# =========================
+echo "Copying alongside files..."
+
+for f in "${WIN_ALONGSIDE[@]}"; do
+    cp "$f" "$WIN_DIR/"
+done
+
+for f in "${LINUX_ALONGSIDE[@]}"; do
+    cp "$f" "$LINUX_DIR/"
+done
+
+# =========================
+# Apply exclusions
+# =========================
+echo "Applying Linux exclusions..."
+for f in "${LINUX_EXCLUDE[@]}"; do
+    rm -rf "$LINUX_DIR/$f" 2>/dev/null || true
+done
+
+echo "Applying Windows exclusions..."
+for f in "${WINDOWS_EXCLUDE[@]}"; do
+    rm -rf "$WIN_DIR/$f" 2>/dev/null || true
+done
+
+# =========================
+# Zip
 # =========================
 echo "============================"
 echo "Creating zip archives..."
 start=$(date +%s)
 cd "$BUILD_DIR"
-zip -r utility-win64.zip win64/* > /dev/null
-zip -r utility-linux-x86_64.zip linux/* > /dev/null
+zip -qr utility-win64.zip win64
+zip -qr utility-linux-x86_64.zip linux
 cd ..
 print_elapsed $start "Zipping finished"
 
-# Total time
-total_elapsed=$(( $(date +%s) - timer_start ))
+# =========================
+# Done
+# =========================
 echo "============================"
-echo "All done! Total time: ${total_elapsed}s"
-echo "Created utility-win64.zip and utility-linux-x86_64.zip"
+echo "All done in $(( $(date +%s) - timer_start ))s"

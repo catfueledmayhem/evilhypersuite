@@ -32,12 +32,14 @@
 #include "Globals.hpp"
 #include "procctrl.hpp"
 #include "netctrl.hpp"
+#include "clipctrl.hpp"
 #include "logzz.hpp"
 #include "LagSwitch.hpp"
-#include "MacroLoopHandler.hpp"
+#include "MacroLoopHandler.hpp"  // Now uses the threaded system
 #include "Helper.hpp"
 #include "RobloxFiles.hpp"
 #include "UserInterface.hpp"
+#include "Alongside.h"
 
 #include "LoadTextures.hpp"
 #include "SettingsHandler.hpp"
@@ -57,6 +59,7 @@
 #include <cstdio>
 #include <map>
 #include <cmath>
+#include <chrono>
 
 int main(int argc, char* argv[]) {
     // Default values
@@ -69,6 +72,7 @@ int main(int argc, char* argv[]) {
     logzz::logs_folder_path = getRobloxAppDataDirectory() + "/logs";
     logzz::local_storage_folder_path = getRobloxAppDataDirectory() + "/LocalStorage";
 #endif
+
     // getting the username, userid, display name etc.. from appstorage.json
     logzz::load_user_info();
 
@@ -79,16 +83,28 @@ int main(int argc, char* argv[]) {
     SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     //SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED); // Fixes weird scaling issues.
 #endif
+
+    // Checking if all of the required files are there.
+    for (size_t i = 0; files_req[i]; ++i) {
+        if (!file_exists(files_req[i])) {
+            log("Missing required file: " + std::string(files_req[i]));
+            return 1;
+        }
+    }
+
     is_elevated = isElevated();
     if (is_elevated) {
         InitWindow(500, 400, "Roblox hypersuite");
-    } else InitWindow(300, 150, "Roblox hypersuite");
+    } else {
+        InitWindow(300, 150, "Roblox hypersuite");
+    }
 
     screen_width = GetScreenWidth();
     screen_height = GetScreenHeight();
 
     kb_layout = 0;
-    SetTargetFPS(60);
+    SetTargetFPS(120);
+
     //-------- LOADING THE FREAKING SETTINGS
     SettingsHandler::LoadSettings();
 
@@ -104,11 +120,21 @@ int main(int argc, char* argv[]) {
 
     //Initializes the input object.
     if (!input.init()) {
-        std::cerr << "Failed to initialize input system!\n";
+       log("Failed to initialize input system!\n");
         return 1;
     }
 
-    initMacros();
+    //Starts the threaded macro system
+    log("[Main] Starting macro system on separate thread...\n");
+    MacroSystem::StartMacroSystem();
+
+    // Optional: Print initial status
+    if (MacroSystem::IsSystemHealthy()) {
+        log("[Main] Macro system is running and healthy\n");
+    } else {
+        log("[Main] Warning: Macro system may have issues\n");
+    }
+
     // No window border for windows :p
 #ifdef _WIN32
     Image icon = LoadImage("resources/logo.png");
@@ -120,9 +146,32 @@ int main(int argc, char* argv[]) {
     Vector2 dragOffset = {0};
     bool isDragging = false;
 
+    // Performance monitoring variables
+    auto last_perf_check = std::chrono::steady_clock::now();
+    constexpr auto PERF_CHECK_INTERVAL = std::chrono::seconds(10);
+
     while (!WindowShouldClose()) {
-       UpdateMacros();
+       // Macros now run automatically on their own thread!
+       // No need to call UpdateMacros() here anymore
+
        logzz::loop_handle();
+
+       // Periodically check macro system health
+       auto now = std::chrono::steady_clock::now();
+       if (now - last_perf_check >= PERF_CHECK_INTERVAL) {
+           last_perf_check = now;
+
+           if (!MacroSystem::IsSystemHealthy()) {
+               log("[Main] Warning: Macro system unhealthy!\n");
+           }
+
+           // Print performance stats with simplified API
+           uint64_t loops;
+           MacroSystem::GetPerformanceStats(loops);
+           if (loops > 0) {
+               log("[Main] Macro system: " + std::to_string(loops) + " loops executed");
+           }
+       }
 
        if (resizable_window != lastResizable) {
             if (resizable_window)
@@ -215,15 +264,31 @@ int main(int argc, char* argv[]) {
         // End ImGui frame
         rlImGuiEnd();
         EndDrawing();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // no 100% cpu usage
+
+        // Reduced sleep time since macros are on separate thread
+        std::this_thread::sleep_for(std::chrono::milliseconds(8)); // ~120Hz main loop
     }
 
-    // Cleanup
+    // CLEANUP - Stop the macro system gracefully
+    log("[Main] Shutting down...\n");
+
+    // Save settings first
     SettingsHandler::SaveSettings();
+    MacroSystem::CleanupMacros();
+
+    // Final performance report because why not
+    uint64_t total_loops;
+    MacroSystem::GetPerformanceStats(total_loops);
+    if (total_loops > 0) {
+        log("[Main] Macro system: " + std::to_string(total_loops) + " loops executed");
+    }
+
+    // clean up other resources
     input.cleanup();
     rlImGuiShutdown();
     UnloadAllTextures();
     CloseWindow();
-    CleanupMacros();
+
+    log("[Main] Shutdown complete\n");
     return 0;
 }

@@ -16,6 +16,7 @@
 #include "Globals.hpp"
 #include "Helper.hpp"
 #include "RobloxFiles.hpp"
+#include "logzz.hpp"
 
 inline std::string GlobalBasicSettingsFile = "empty";
 inline char gbsPathBuffer[512] = "";
@@ -383,7 +384,11 @@ inline void renderRobloxSettingsWindow() {
 
         if (ImGui::Button("Restart / Start Roblox", ImVec2(160, 0))) {
             // Check BEFORE restarting to show correct message
-            wasRunningBeforeRestart = isProcessRunning(roblox_process_name);
+            if (logzz::current_state == IN_LUA_APP || logzz::current_state == IN_GAME) {
+                wasRunningBeforeRestart = true;
+            } else {
+                wasRunningBeforeRestart = false;
+            }
             isRestarting = true;
             restartStatusMsg = wasRunningBeforeRestart ? "Restarting Roblox..." : "Starting Roblox...";
             restartMessageTimer = 0.0f;
@@ -399,7 +404,7 @@ inline void renderRobloxSettingsWindow() {
 
             // Check if process is running after a brief delay
             if (restartMessageTimer > 2.0f) {
-                if (isProcessRunning(roblox_process_name)) {
+                if (logzz::current_state == IN_LUA_APP || logzz::current_state == IN_GAME) {
                     restartStatusMsg = wasRunningBeforeRestart ? "Roblox restarted!" : "Roblox started!";
                     isRestarting = false;
                     restartMessageTimer = 3.0f; // Show success for 3 seconds

@@ -33,14 +33,20 @@
 #include <sys/types.h>
 #endif
 
-// NOW include your other headers
 #include <iostream>
 #include <string>
 #include <cstdlib>
 #include <stdlib.h>
+#include <fstream>
+#include <filesystem>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
 #include <algorithm>
 #include "Globals.hpp"
 #include "inpctrl.hpp"
+
+namespace fs = std::filesystem;
 
 inline bool isElevated() {
 #if defined(_WIN32)
@@ -97,6 +103,13 @@ inline void runXhostPlus() {
     }
 }
 #endif
+
+inline int file_exists(const char *path) {
+    FILE *f = fopen(path, "rb");
+    if (!f) return 0;
+    fclose(f);
+    return 1;
+}
 
 inline bool TryElevate(const char* password)
 {
@@ -223,7 +236,7 @@ inline void restartRoblox() {
         // Kill the actual Sober process
         std::string killCmd = "sudo -i -u ";
         killCmd += normalUser;
-        killCmd += " bash -c 'killall -9 sober.real >/dev/null 2>&1'";
+        killCmd += " bash -c 'killall -9 "+ roblox_process_name + " >/dev/null 2>&1'";
         std::system(killCmd.c_str());
 
         std::string url;
@@ -252,9 +265,73 @@ inline void restartRoblox() {
 #endif
 }
 
+inline std::ofstream& log_file()
+{
+    static std::ofstream file = [] {
+        fs::create_directories("logs");
 
-inline void log(std::string text) {
-    std::cout << "[3RU] " << text << std::endl;
+        auto now = std::chrono::system_clock::now();
+        std::time_t t = std::chrono::system_clock::to_time_t(now);
+
+        std::tm tm{};
+#ifdef _WIN32
+        localtime_s(&tm, &t);
+#else
+        localtime_r(&t, &tm);
+#endif
+
+        std::ostringstream filename;
+        filename << "logs/"
+                 << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S")
+                 << ".log";
+
+        return std::ofstream(filename.str(), std::ios::app);
+    }();
+
+    return file;
+}
+
+inline std::string current_time_string()
+{
+    using namespace std::chrono;
+    auto now = system_clock::now();
+    auto ms = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
+
+    std::time_t t = system_clock::to_time_t(now);
+    std::tm tm{};
+#ifdef _WIN32
+    localtime_s(&tm, &t);
+#else
+    localtime_r(&t, &tm);
+#endif
+
+    std::ostringstream oss;
+    oss << std::setfill('0')
+        << std::setw(2) << tm.tm_hour << ':'
+        << std::setw(2) << tm.tm_min << ':'
+        << std::setw(2) << tm.tm_sec << '.'
+        << std::setw(3) << ms.count();
+
+    return oss.str();
+}
+
+inline void log(const std::string& text)
+{
+    std::string time = current_time_string();
+    std::string line = "[" + time + "] [HSLOG] " + text;
+
+    // Write to timestamped log
+    auto& file = log_file();
+    file << line << '\n';
+    file.flush();
+
+    // Write to LATEST.log directly (no copy)
+    std::ofstream latest("logs/LATEST.log", std::ios::app);
+    latest << line << '\n';
+    latest.flush();
+
+    // Print to console
+    std::cout << line << std::endl;
 }
 
 inline void RunSilent(const std::string &cmd) {
