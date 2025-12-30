@@ -33,7 +33,7 @@ INCLUDES = -I./include \
 LINUX_OBJ_DIR = out/linux
 LINUX_TARGET = build/linux/utility
 LINUX_CXXFLAGS = -I./include/lua-5.4.2_linux/include
-LINUX_LDFLAGS = -lraylib -L./include/lua-5.4.2_linux -llua54 -lGL -lm -lpthread -ldl -lrt -lX11
+LINUX_LDFLAGS = -lraylib -L./include/lua-5.4.2_linux -llua54 -lGL -lm -lpthread -ldl -lrt -lX11 -lcurl
 LINUX_OBJS = $(patsubst %.cpp,$(LINUX_OBJ_DIR)/%.o,$(SRCS))
 LINUX_DEPS = $(LINUX_OBJS:.o=.d)
 
@@ -66,10 +66,21 @@ WIN_OBJ_DIR = out/win64
 WIN_TARGET = build/win64/utility.exe
 WIN_CXX_BASE = x86_64-w64-mingw32-g++
 WIN_CXX := $(shell command -v ccache >/dev/null 2>&1 && echo "ccache $(WIN_CXX_BASE)" || echo "$(WIN_CXX_BASE)")
-WIN_CXXFLAGS = -std=c++17 -O2 -Wall -Wextra $(INCLUDES) -I./include/raylibWin64/include -I./include/lua-5.4.2_win64/include -I./include/WinDivert-2.2.2-A/include
-WIN_LDFLAGS = -L./include/raylibWin64/lib -L./include/lua-5.4.2_win64 -L./include/WinDivert-2.2.2-A/x64 \
-              -static -lraylib -lWinDivert -llua54 -lopengl32 -lgdi32 -lwinmm -lws2_32 \
-              -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic -mwindows -lshell32
+WIN_CXXFLAGS = -std=c++17 -O2 -Wall -Wextra $(INCLUDES) \
+               -I./include/raylibWin64/include \
+               -I./include/lua-5.4.2_win64/include \
+               -I./include/WinDivert-2.2.2-A/include \
+               -I./include/curl-mingw-win64/include
+WIN_LDFLAGS = -L./include/raylibWin64/lib \
+              -L./include/lua-5.4.2_win64 \
+              -L./include/WinDivert-2.2.2-A/x64 \
+              -L./include/curl-mingw-win64/bin \
+              -static -lraylib -lWinDivert -llua54 \
+              -lopengl32 -lgdi32 -lwinmm -lws2_32 \
+              -static-libgcc -static-libstdc++ \
+              -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic \
+              -lcurl-x64 \
+              -mwindows -lshell32
 WIN_ICON = alongside/resources/icon.o
 WIN_MANIFEST = alongside/resources/app.res
 WIN_OBJS = $(patsubst %.cpp,$(WIN_OBJ_DIR)/%.o,$(SRCS))

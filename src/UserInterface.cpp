@@ -14,6 +14,7 @@
 #include "WallhopAndWallwalk.hpp"
 #include "GlobalBasicSettings.hpp"
 #include "hsscript.hpp"
+#include "ServerHop.hpp"
 #include "hsscriptman.hpp"
 #include "ImportedScriptsUI.hpp"
 #include <string>
@@ -832,14 +833,224 @@ void UpdateUI() {
 
             ImGui::EndTabItem();
         }
-        renderRobloxSettingsWindow();
+        renderRobloxSettingsWindow();// global settings
 
-        //if (ImGui::BeginTabItem("Account Manager")) {
+        if (ImGui::BeginTabItem("Server hop")) {
+            ImGui::Text("Hypersuite server hopper:");
+            ImGui::Separator();
 
-          //  ImGui::EndTabItem();
-          //}
+            // state variables
+            static bool wasRunningBeforeRestart = false;
+            static bool isRestarting = false;
+            static bool showRestartSuccess = false;
+            static float restartMessageTimer = 0.0f;
+            static std::string restartStatusMsg = "";
+            static bool showPlaceFetchMsg = false;
+            static bool placeFetchSuccess = false;
+            static float placeFetchTimer = 0.0f;
+            static bool showInstanceFetchMsg = false;
+            static bool instanceFetchSuccess = false;
+            static float instanceFetchTimer = 0.0f;
+            static bool showHopMsg = false;
+            static bool hopSuccess = false;
+            static float hopMsgTimer = 0.0f;
+            static std::string hopStatusMsg = "";
 
-        if (ImGui::BeginTabItem("Settings")) {
+            // === PLACE ID SECTION ===
+            ImGui::AlignTextToFramePadding();
+            ImGui::Text("Place ID:");
+            ImGui::SameLine(80);
+            ImGui::SetNextItemWidth(130);
+            ImGui::InputText("##PlaceID", placeIdBuffer, sizeof(placeIdBuffer));
+            ImGui::SameLine();
+            if (ImGui::Button("Fetch##PlaceID", ImVec2(60, 0))) {
+                unsigned long long lastPlaceID = getLastPlaceID();
+                if (lastPlaceID != 0) {
+                    std::string placeIDStr = std::to_string(lastPlaceID);
+                    std::snprintf(placeIdBuffer, sizeof(placeIdBuffer), "%s", placeIDStr.c_str());
+                    placeFetchSuccess = true;
+                } else {
+                    placeFetchSuccess = false;
+                }
+                showPlaceFetchMsg = true;
+                placeFetchTimer = 2.0f;
+            }
+
+            if (showPlaceFetchMsg && placeFetchTimer > 0.0f) {
+                ImGui::SameLine();
+                ImGui::TextColored(placeFetchSuccess ? ImVec4(0.3f, 1.0f, 0.3f, 1.0f) : ImVec4(1.0f, 0.3f, 0.3f, 1.0f),
+                                  placeFetchSuccess ? "OK" : "Fail");
+                placeFetchTimer -= ImGui::GetIO().DeltaTime;
+                if (placeFetchTimer <= 0.0f) showPlaceFetchMsg = false;
+            }
+
+            // === INSTANCE ID SECTION ===
+            ImGui::AlignTextToFramePadding();
+            ImGui::Text("Instance:");
+            ImGui::SameLine(80);
+            ImGui::SetNextItemWidth(130);
+
+            bool hasPlaceId = strlen(placeIdBuffer) > 0;
+            if (!hasPlaceId) ImGui::BeginDisabled();
+
+            ImGui::InputText("##InstanceID", instanceIdBuffer, sizeof(instanceIdBuffer));
+            ImGui::SameLine();
+            if (ImGui::Button("Fetch##InstanceID", ImVec2(60, 0))) {
+                std::string lastInstanceID = getLastInstanceID();
+                if (!lastInstanceID.empty()) {
+                    std::snprintf(instanceIdBuffer, sizeof(instanceIdBuffer), "%s", lastInstanceID.c_str());
+                    instanceFetchSuccess = true;
+                } else {
+                    instanceFetchSuccess = false;
+                }
+                showInstanceFetchMsg = true;
+                instanceFetchTimer = 2.0f;
+            }
+
+            if (!hasPlaceId) ImGui::EndDisabled();
+
+            if (showInstanceFetchMsg && instanceFetchTimer > 0.0f) {
+                ImGui::SameLine();
+                ImGui::TextColored(instanceFetchSuccess ? ImVec4(0.3f, 1.0f, 0.3f, 1.0f) : ImVec4(1.0f, 0.3f, 0.3f, 1.0f),
+                                  instanceFetchSuccess ? "OK" : "Fail");
+                instanceFetchTimer -= ImGui::GetIO().DeltaTime;
+                if (instanceFetchTimer <= 0.0f) showInstanceFetchMsg = false;
+            }
+
+            ImGui::Spacing();
+
+            // === MIN FREE SLOTS ===
+            ImGui::AlignTextToFramePadding();
+            ImGui::Text("Min slots:");
+            ImGui::SameLine(80);
+            ImGui::SetNextItemWidth(60);
+            ImGui::SliderInt("##MinSlots", &ServerHopper::minFreeSlots, 1, 10);
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            // === SERVER HOP BUTTON ===
+            if (!hasPlaceId) ImGui::BeginDisabled();
+
+            if (ImGui::Button("Server Hop", ImVec2(90, 0))) {
+                std::string newServerID;
+                hopSuccess = ServerHopper::HopToNewServer(placeIdBuffer, newServerID);
+
+                if (hopSuccess) {
+                    // Set instance ID and restart
+                    std::snprintf(instanceIdBuffer, sizeof(instanceIdBuffer), "%s", newServerID.c_str());
+                    hopStatusMsg = "Hopping...";
+
+                    // Restart Roblox with new server
+                    wasRunningBeforeRestart = (logzz::current_state == IN_LUA_APP || logzz::current_state == IN_GAME);
+                    restartRoblox();
+                } else {
+                    hopStatusMsg = ServerHopper::lastError;
+                }
+
+                showHopMsg = true;
+                hopMsgTimer = 3.0f;
+            }
+
+            if (!hasPlaceId) ImGui::EndDisabled();
+
+            if (showHopMsg && hopMsgTimer > 0.0f) {
+                ImGui::SameLine();
+                ImGui::TextColored(hopSuccess ? ImVec4(0.3f, 1.0f, 0.3f, 1.0f) : ImVec4(1.0f, 0.3f, 0.3f, 1.0f),
+                                  "%s", hopStatusMsg.c_str());
+                hopMsgTimer -= ImGui::GetIO().DeltaTime;
+                if (hopMsgTimer <= 0.0f) showHopMsg = false;
+            }
+
+            ImGui::SameLine();
+            if (ImGui::Button("Clear List", ImVec2(80, 0))) {
+                ServerHopper::ClearBannedServers();
+            }
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            // === BANNED SERVERS LIST ===
+            ImGui::Text("Visited servers: %zu", ServerHopper::bannedServerIDs.size());
+
+            ImGui::BeginChild("##BannedServers", ImVec2(0, 120), true);
+
+            if (ServerHopper::bannedServerIDs.empty()) {
+                ImGui::TextDisabled("No servers visited yet");
+            } else {
+                static int toRemove = -1;
+                for (size_t i = 0; i < ServerHopper::bannedServerIDs.size(); i++) {
+                    ImGui::PushID(i);
+
+                    // Show server ID
+                    ImGui::Text("%s", ServerHopper::bannedServerIDs[i].c_str());
+
+                    // Remove button
+                    ImGui::SameLine(ImGui::GetContentRegionAvail().x - 50);
+                    if (ImGui::SmallButton("Remove")) {
+                        toRemove = i;
+                    }
+
+                    ImGui::PopID();
+                }
+
+                // Remove outside the loop
+                if (toRemove >= 0) {
+                    ServerHopper::bannedServerIDs.erase(ServerHopper::bannedServerIDs.begin() + toRemove);
+                    toRemove = -1;
+                }
+            }
+
+            ImGui::EndChild();
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            // === ROBLOX CONTROL ===
+            ImGui::Text("Roblox control:");
+            ImGui::Spacing();
+
+            if (ImGui::Button("Restart / Start Roblox", ImVec2(160, 0))) {
+                if (logzz::current_state == IN_LUA_APP || logzz::current_state == IN_GAME) {
+                    wasRunningBeforeRestart = true;
+                } else {
+                    wasRunningBeforeRestart = false;
+                }
+                isRestarting = true;
+                restartStatusMsg = wasRunningBeforeRestart ? "Restarting..." : "Starting...";
+                restartMessageTimer = 0.0f;
+                showRestartSuccess = true;
+                restartRoblox();
+            }
+
+            if (isRestarting) {
+                restartMessageTimer += ImGui::GetIO().DeltaTime;
+                if (restartMessageTimer > 2.0f) {
+                    if (logzz::current_state == IN_LUA_APP || logzz::current_state == IN_GAME) {
+                        restartStatusMsg = wasRunningBeforeRestart ? "Restarted!" : "Started!";
+                        isRestarting = false;
+                        restartMessageTimer = 2.0f;
+                    }
+                }
+            }
+
+            if (showRestartSuccess && restartMessageTimer > 0.0f) {
+                ImGui::SameLine();
+                ImGui::TextColored(isRestarting ? ImVec4(1.0f, 0.8f, 0.2f, 1.0f) : ImVec4(0.3f, 1.0f, 0.3f, 1.0f),
+                                  "%s", restartStatusMsg.c_str());
+                if (!isRestarting) {
+                    restartMessageTimer -= ImGui::GetIO().DeltaTime;
+                    if (restartMessageTimer <= 0.0f) showRestartSuccess = false;
+                }
+            }
+
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Hypersuite")) {
             // ==== GLOBAL SETTINGS ====
             ImGui::Text("Global settings:");
             ImGui::Separator();

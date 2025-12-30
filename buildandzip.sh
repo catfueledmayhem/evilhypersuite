@@ -24,6 +24,7 @@ COMMON_RESOURCES=(
 WIN_ALONGSIDE=(
     "$ALONGSIDE_DIR/WinDivert.dll"
     "$ALONGSIDE_DIR/WinDivert64.sys"
+    "$ALONGSIDE_DIR/libcurl-x64.dll"
 )
 
 LINUX_ALONGSIDE=(
@@ -42,6 +43,7 @@ LINUX_EXCLUDE=(
     "resources/app.manifest"
     "resources/app.rc"
     "resources/app.res"
+    "resources/curl-ca-bundle.crt"
 )
 
 # =========================

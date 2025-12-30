@@ -238,7 +238,7 @@ inline void setGBSFramerateCap(int newFPS) {
 }
 
 inline void renderRobloxSettingsWindow() {
-    if (ImGui::BeginTabItem("Roblox")) {
+    if (ImGui::BeginTabItem("Global settings")) {
         // Use default path if not set
         if (GlobalBasicSettingsFile == "empty") {
             setGBSFileDirectory();
@@ -297,90 +297,6 @@ inline void renderRobloxSettingsWindow() {
         static bool showRestartSuccess = false;
         static float restartMessageTimer = 0.0f;
         static std::string restartStatusMsg = "";
-
-        static bool showPlaceFetchMsg = false;
-        static bool placeFetchSuccess = false;
-        static float placeFetchTimer = 0.0f;
-
-        static bool showInstanceFetchMsg = false;
-        static bool instanceFetchSuccess = false;
-        static float instanceFetchTimer = 0.0f;
-
-        ImGui::AlignTextToFramePadding();
-        ImGui::Text("Place ID:");
-        ImGui::SameLine(80);
-        ImGui::SetNextItemWidth(150);
-        ImGui::InputText("##PlaceID", placeIdBuffer, sizeof(placeIdBuffer));
-        ImGui::SameLine();
-        if (ImGui::Button("Fetch##PlaceID", ImVec2(60, 0))) {
-            unsigned long long lastPlaceID = getLastPlaceID();
-            if (lastPlaceID != 0) {
-                std::string placeIDStr = std::to_string(lastPlaceID);
-                std::snprintf(placeIdBuffer, sizeof(placeIdBuffer), "%s", placeIDStr.c_str());
-                placeFetchSuccess = true;
-            } else {
-                placeFetchSuccess = false;
-            }
-            showPlaceFetchMsg = true;
-            placeFetchTimer = 3.0f;
-        }
-
-        if (showPlaceFetchMsg && placeFetchTimer > 0.0f) {
-            ImGui::SameLine();
-            if (placeFetchSuccess) {
-                ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1.0f), "Fetched!");
-            } else {
-                ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "Failed!");
-            }
-            placeFetchTimer -= ImGui::GetIO().DeltaTime;
-            if (placeFetchTimer <= 0.0f) {
-                showPlaceFetchMsg = false;
-            }
-        }
-
-        ImGui::AlignTextToFramePadding();
-        ImGui::Text("Instance:");
-        ImGui::SameLine(80);
-        ImGui::SetNextItemWidth(150);
-
-        // Disable instance ID if no place ID
-        bool hasPlaceId = strlen(placeIdBuffer) > 0;
-        if (!hasPlaceId) {
-            ImGui::BeginDisabled();
-        }
-
-        ImGui::InputText("##InstanceID", instanceIdBuffer, sizeof(instanceIdBuffer));
-        ImGui::SameLine();
-        if (ImGui::Button("Fetch##InstanceID", ImVec2(60, 0))) {
-            std::string lastInstanceID = getLastInstanceID();
-            if (!lastInstanceID.empty()) {
-                std::snprintf(instanceIdBuffer, sizeof(instanceIdBuffer), "%s", lastInstanceID.c_str());
-                instanceFetchSuccess = true;
-            } else {
-                instanceFetchSuccess = false;
-            }
-            showInstanceFetchMsg = true;
-            instanceFetchTimer = 3.0f;
-        }
-
-        if (!hasPlaceId) {
-            ImGui::EndDisabled();
-        }
-
-        if (showInstanceFetchMsg && instanceFetchTimer > 0.0f) {
-            ImGui::SameLine();
-            if (instanceFetchSuccess) {
-                ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1.0f), "Fetched!");
-            } else {
-                ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "Failed!");
-            }
-            instanceFetchTimer -= ImGui::GetIO().DeltaTime;
-            if (instanceFetchTimer <= 0.0f) {
-                showInstanceFetchMsg = false;
-            }
-        }
-
-        ImGui::Spacing();
 
         if (ImGui::Button("Restart / Start Roblox", ImVec2(160, 0))) {
             // Check BEFORE restarting to show correct message
