@@ -65,6 +65,7 @@ end
 ```
 
 See the [Scripting Documentation](https://3443e.gitlab.io/hypersuite/docs/) for complete API reference and examples.
+Join our community [Discord](https://discord.gg/HR7br84kBH)
 
 ## Installation
 
@@ -223,7 +224,7 @@ This project uses the following open-source libraries:
 
 For support, documentation, and updates:
 - Visit our [website](https://3443e.gitlab.io/hypersuite/)
-- Join our community [Discord/Forum](https://discord.gg/ePT8ncbV5X)
+- Join our community [Discord](https://discord.gg/HR7br84kBH)
 - Check the [documentation](https://3443e.gitlab.io/hypersuite/docs/)
 
 ---
