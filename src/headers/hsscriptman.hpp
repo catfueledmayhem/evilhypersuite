@@ -3,6 +3,7 @@
 #include "logzz.hpp"
 #include "hsscript.hpp"
 #include "Helper.hpp"
+#include "obstructive/MacroThread.hpp"
 #include <string>
 #include <vector>
 #include <filesystem>
@@ -294,6 +295,11 @@ inline bool reloadScript(size_t index) {
         return false;
     }
 
+    // Wait for any currently running instance of this script to finish
+    // before touching the Lua state. Without this, cleanup() sets
+    // s_instance = nullptr while the thread is still inside a Lua callback -> SIGSEGV.
+    MacroThread::WaitForMacro("script_" + macro.name);
+
     HSScript* script = HSScriptClasses[macro.scriptIndex].get();
     if (!script) {
         return false;
@@ -315,6 +321,11 @@ inline void removeImportedScript(size_t index) {
     }
 
     ImportedScript& macro = ImportedMacros[index];
+
+    // Same as reloadScript — wait for the script thread to finish
+    // before freeing the Lua state underneath it.
+    MacroThread::WaitForMacro("script_" + macro.name);
+
     if (macro.scriptIndex >= 0 && static_cast<size_t>(macro.scriptIndex) < HSScriptClasses.size()) {
         HSScriptClasses[macro.scriptIndex]->cleanup();
         HSScriptClasses.erase(HSScriptClasses.begin() + macro.scriptIndex);

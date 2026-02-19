@@ -50,7 +50,6 @@ namespace fs = std::filesystem;
 
 inline bool isElevated() {
 #if defined(_WIN32)
-   // Try TokenElevation first (works on Vista+)
     HANDLE token = NULL;
     if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token)) {
         TOKEN_ELEVATION elevation;
@@ -62,7 +61,6 @@ inline bool isElevated() {
         }
     }
 
-    // Fallback: check membership of Administrators group (may be less accurate under UAC)
     BOOL isAdmin = FALSE;
     PSID adminGroup = NULL;
     SID_IDENTIFIER_AUTHORITY ntAuth = SECURITY_NT_AUTHORITY;
@@ -81,24 +79,91 @@ inline bool isElevated() {
 }
 
 #if defined(__linux__)
+
+inline std::string findPrivEscTool() {
+    // Ordered by preference
+    static const char* candidates[] = { "sudo", "doas", "pkexec", "su", nullptr };
+    for (int i = 0; candidates[i]; i++) {
+        std::string check = std::string("command -v ") + candidates[i] + " >/dev/null 2>&1";
+        if (system(check.c_str()) == 0) {
+            return candidates[i];
+        }
+    }
+    return "sudo"; // fallback
+}
+
+inline std::string privEscPrefix(const std::string& tool,
+                                  const std::string& user,
+                                  bool withPassword = false,
+                                  const std::string& password = "") {
+    if (tool == "sudo") {
+        std::string prefix;
+        if (withPassword && !password.empty()) {
+            prefix = "echo \"" + password + "\" | sudo -S -p '' ";
+        } else {
+            prefix = "sudo ";
+        }
+        if (!user.empty()) prefix += "-u " + user + " ";
+        return prefix;
+    } else if (tool == "doas") {
+        std::string prefix = "doas ";
+        if (!user.empty()) prefix += "-u " + user + " ";
+        return prefix;
+    } else if (tool == "pkexec") {
+        std::string prefix = "pkexec ";
+        if (!user.empty()) prefix += "--user " + user + " ";
+        return prefix;
+    } else if (tool == "su") {
+        // su <user> -c "command"  — wraps differently, caller must quote the command
+        if (!user.empty()) return "su " + user + " -c ";
+        return "su -c ";
+    }
+    return "sudo ";
+}
+
+inline std::string getNormalUser() {
+    // sudo sets SUDO_USER
+    const char* u = getenv("SUDO_USER");
+    if (u && u[0]) return u;
+
+    // doas sets DOAS_USER
+    u = getenv("DOAS_USER");
+    if (u && u[0]) return u;
+
+    // pkexec sets PKEXEC_UID — resolve to username
+    const char* pkuid = getenv("PKEXEC_UID");
+    if (pkuid && pkuid[0]) {
+        uid_t uid = (uid_t)atoi(pkuid);
+        struct passwd* pw = getpwuid(uid);
+        if (pw) return pw->pw_name;
+    }
+
+    // Non-elevated or unknown escalation tool — just use current user
+    u = getenv("USER");
+    if (u && u[0]) return u;
+
+    // Last resort
+    struct passwd* pw = getpwuid(getuid());
+    if (pw) return pw->pw_name;
+
+    return "";
+}
+
 inline bool hasX11Display() {
     const char* d = getenv("DISPLAY");
     return d && d[0] != '\0';
 }
 
 inline void runXhostPlus() {
-    if (!hasX11Display())
-        return;
+    if (!hasX11Display()) return;
+
     if (isElevated()) {
-        // Program was run with sudo — run command as normal user
-        const char* normalUser = getenv("SUDO_USER");
-        if (!normalUser) normalUser = "root"; // fallback
-        std::string cmd = "sudo -u ";
-        cmd += normalUser;
-        cmd += " xhost +";
+        std::string tool = findPrivEscTool();
+        std::string user = getNormalUser();
+        std::string prefix = privEscPrefix(tool, user);
+        std::string cmd = prefix + "xhost +";
         system(cmd.c_str());
     } else {
-        // Program is run normally — run xhost + normally
         system("xhost +");
     }
 }
@@ -113,48 +178,43 @@ inline int file_exists(const char *path) {
 
 inline bool TryElevate(const char* password)
 {
-    // Already elevated?
-    if (isElevated())
-        return true;
+    if (isElevated()) return true;
 
 #if defined(__linux__)
-    // Get own executable path
     char exePath[4096] = {0};
     readlink("/proc/self/exe", exePath, sizeof(exePath)-1);
 
-    // Test if password is correct first
-    std::string testCmd =
-        "echo \"" + std::string(password) + "\" | sudo -S -p '' true 2>&1";
-    int testResult = system(testCmd.c_str());
+    std::string tool = findPrivEscTool();
+    std::string testCmd;
+    if (tool == "sudo") {
+        testCmd = "echo \"" + std::string(password) + "\" | sudo -S -p '' true 2>&1";
+    } else if (tool == "doas") {
+        testCmd = "doas true 2>&1";
+    } else if (tool == "pkexec") {
+        testCmd = "pkexec true 2>&1";
+    } else {
+        testCmd = "true"; // su is interactive, skip pre-test
+    }
 
-    // If password test failed, return false
-    if (testResult != 0)
-        return false;
+    if (system(testCmd.c_str()) != 0) return false;
 
-    // Password is correct, now elevate and restart
-    std::string cmd =
-        "echo \"" + std::string(password) + "\" | sudo -S -p '' \"" + std::string(exePath) + "\" &";
+    // Re-launch elevated
+    std::string cmd;
+    if (tool == "sudo") {
+        cmd = "echo \"" + std::string(password) + "\" | sudo -S -p '' \"" +
+              std::string(exePath) + "\" &";
+    } else if (tool == "doas") {
+        cmd = "doas \"" + std::string(exePath) + "\" &";
+    } else if (tool == "pkexec") {
+        cmd = "pkexec \"" + std::string(exePath) + "\" &";
+    } else {
+        // su: prompt will appear in terminal
+        cmd = "su -c '\"" + std::string(exePath) + "\"' &";
+    }
+
     system(cmd.c_str());
-
-    // Give the elevated process a moment to start
-    usleep(100000); // 100ms
-
-    exit(0); // stop current instance
-
-//#elif defined(_WIN32)
-  //  wchar_t exePath[MAX_PATH];
-    //GetModuleFileNameW(NULL, exePath, MAX_PATH);
-
-    //SHELLEXECUTEINFOW sei = {0};  // <-- C-style init works with MinGW
-    //sei.cbSize = sizeof(sei);
-    //sei.lpVerb = L"runas";
-    //sei.lpFile = exePath;
-    //sei.nShow = SW_SHOWNORMAL;
-
-    //if (!ShellExecuteExW(&sei))
-        //return false;
-
-    //exit(0);
+    usleep(100000); // 100ms for the new process to start
+    exit(0);
 #else
     return false;
 #endif
@@ -211,8 +271,7 @@ inline bool isProcessRunning(const std::string& nameSubstring) {
 
 inline void restartRoblox() {
 #ifdef _WIN32
-    // Windows version
-    system("taskkill /IM RobloxPlayerBeta.exe /F"); // forcibly close
+    system("taskkill /IM RobloxPlayerBeta.exe /F");
 
     std::string url;
     bool hasPlaceId = strlen(placeIdBuffer) > 0;
@@ -229,38 +288,32 @@ inline void restartRoblox() {
 
     ShellExecuteA(nullptr, "open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 #else
-    const char* normalUser = getenv("SUDO_USER");
-    if (!normalUser) normalUser = getenv("USER"); // fallback if not using sudo
+    std::string normalUser = getNormalUser();
+    if (normalUser.empty()) return;
 
-    if (normalUser) {
-        // Kill the actual Sober process
-        std::string killCmd = "sudo -i -u ";
-        killCmd += normalUser;
-        killCmd += " bash -c 'killall -9 "+ roblox_process_name + " >/dev/null 2>&1'";
-        std::system(killCmd.c_str());
+    std::string tool = findPrivEscTool();
+    std::string prefix;
+    if (isElevated()) {
+        prefix = privEscPrefix(tool, normalUser);
+    }
 
-        std::string url;
-        bool hasPlaceId = strlen(placeIdBuffer) > 0;
-        bool hasInstanceId = strlen(instanceIdBuffer) > 0;
+    std::string killCmd = prefix + "bash -c 'killall -9 " + roblox_process_name + " >/dev/null 2>&1'";
+    std::system(killCmd.c_str());
 
-        if (hasPlaceId) {
-            url = "roblox://experiences/start?placeId=" + std::string(placeIdBuffer);
-            if (hasInstanceId) {
-                url += "&gameInstanceId=" + std::string(instanceIdBuffer);
-            }
+    std::string url;
+    bool hasPlaceId   = strlen(placeIdBuffer)    > 0;
+    bool hasInstanceId = strlen(instanceIdBuffer) > 0;
 
-            // Launch with xdg-open
-            std::string launchCmd = "sudo -i -u ";
-            launchCmd += normalUser;
-            launchCmd += " bash -c 'xdg-open \"" + url + "\" &'";
-            std::system(launchCmd.c_str());
-        } else {
-            // Restart Sober normally (no place ID)
-            std::string runCmd = "sudo -i -u ";
-            runCmd += normalUser;
-            runCmd += " bash -c 'flatpak run org.vinegarhq.Sober &'";
-            std::system(runCmd.c_str());
+    if (hasPlaceId) {
+        url = "roblox://experiences/start?placeId=" + std::string(placeIdBuffer);
+        if (hasInstanceId) {
+            url += "&gameInstanceId=" + std::string(instanceIdBuffer);
         }
+        std::string launchCmd = prefix + "bash -c 'xdg-open \"" + url + "\" &'";
+        std::system(launchCmd.c_str());
+    } else {
+        std::string runCmd = prefix + "bash -c 'flatpak run org.vinegarhq.Sober &'";
+        std::system(runCmd.c_str());
     }
 #endif
 }
@@ -320,17 +373,14 @@ inline void log(const std::string& text)
     std::string time = current_time_string();
     std::string line = "[" + time + "] [HSLOG] " + text;
 
-    // Write to timestamped log
     auto& file = log_file();
     file << line << '\n';
     file.flush();
 
-    // Write to LATEST.log directly (no copy)
     std::ofstream latest("logs/LATEST.log", std::ios::app);
     latest << line << '\n';
     latest.flush();
 
-    // Print to console
     std::cout << line << std::endl;
 }
 
@@ -361,8 +411,7 @@ inline void showMessageBox(const std::string& title, const std::string& msg) {
 #if defined(_WIN32)
     MessageBoxA(NULL, msg.c_str(), title.c_str(), MB_OK | MB_ICONINFORMATION);
 #elif defined(__linux__)
-    std::string cmd =
-        "zenity --info --title=\"" + title + "\" --text=\"" + msg + "\"";
+    std::string cmd = "zenity --info --title=\"" + title + "\" --text=\"" + msg + "\"";
     system(cmd.c_str());
 #else
     #error "Unsupported platform"
@@ -372,7 +421,7 @@ inline void showMessageBox(const std::string& title, const std::string& msg) {
 inline void bindToMacro(std::string macro_name) {
     if (!events[3]) {
         events[3] = true;
-        CrossInput::Key userKey = input.getCurrentPressedKey(5000); // 5 sec timeout
+        CrossInput::Key userKey = input.getCurrentPressedKey(5000);
         if (userKey != static_cast<CrossInput::Key>(0)) {
             std::cout << "[3RU] [inpctrl] Bound: " << input.getKeyName(userKey) << std::endl;
             Binds[macro_name] = userKey;
@@ -384,7 +433,7 @@ inline void bindToMacro(std::string macro_name) {
 inline void BindSpamKey() {
     if (!events[8]) {
         events[8] = true;
-        CrossInput::Key userKey = input.getCurrentPressedKey(5000); // 5 sec timeout
+        CrossInput::Key userKey = input.getCurrentPressedKey(5000);
         if (userKey != static_cast<CrossInput::Key>(0)) {
             std::cout << "[3RU] [inpctrl] Bound: " << input.getKeyName(userKey) << std::endl;
             SpamKey = userKey;
@@ -396,7 +445,7 @@ inline void BindSpamKey() {
 inline void BindVariable(CrossInput::Key* keyLoc) {
     if (!events[9]) {
         events[9] = true;
-        CrossInput::Key userKey = input.getCurrentPressedKey(5000); // 5 sec timeout
+        CrossInput::Key userKey = input.getCurrentPressedKey(5000);
         if (userKey != static_cast<CrossInput::Key>(0)) {
             std::cout << "[3RU] [inpctrl] Bound: " << input.getKeyName(userKey) << std::endl;
             *keyLoc = userKey;

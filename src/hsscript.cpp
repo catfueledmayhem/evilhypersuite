@@ -10,6 +10,7 @@
 #include <thread>
 #include <chrono>
 #include <unordered_map>
+#include <cstdint>
 
 // Initialize static member
 HSScript* HSScript::s_instance = nullptr;
@@ -454,8 +455,12 @@ int HSScript::lua_moveMouse(lua_State* L) {
 
 int HSScript::lua_sleep(lua_State* L) {
     int ms = luaL_checkinteger(L, 1);
-    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-    return 0;
+#if defined(_WIN32)
+    Sleep(ms);          // Windows Sleep in milliseconds
+#else
+    usleep(ms * 1000);  // Linux usleep takes microseconds
+#endif
+       return 0;
 }
 
 int HSScript::lua_log(lua_State* L) {

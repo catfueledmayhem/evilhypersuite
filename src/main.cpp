@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
     screen_height = GetScreenHeight();
 
     kb_layout = 0;
-    SetTargetFPS(120);
+    SetTargetFPS(240);
 
     //-------- LOADING THE FREAKING SETTINGS
     SettingsHandler::LoadSettings();
