@@ -88,6 +88,7 @@ private:
     static int lua_isKeyPressed(lua_State* L);
     static int lua_typeText(lua_State* L);
     static int lua_moveMouse(lua_State* L);
+    static int lua_turnDegrees(lua_State* L);
     static int lua_sleep(lua_State* L);
     static int lua_log(lua_State* L);
     static int lua_waitForKey(lua_State* L);

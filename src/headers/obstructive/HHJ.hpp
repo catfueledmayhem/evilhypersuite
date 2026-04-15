@@ -69,85 +69,12 @@ inline void helicopterHighJump()
     {
         log("HHJ triggered");
 
-        // AUTO-TIMING MODE (Experimental)
-        if (hhj_auto_timing)
-        {
-            input.holdKey(CrossInput::Key::Space); // Jump
-            std::this_thread::sleep_for(std::chrono::milliseconds(550));
-            input.holdKey(CrossInput::Key::W); // Hold W
-            std::this_thread::sleep_for(std::chrono::milliseconds(68));
-        }
+            float base_value = cam_fix_active ? 500.0f : 360.0f;
+            float multiplier = (359.0f / 360.0f) * (359.0f / 360.0f); // Slight adjustment for accuracy
 
-        // FREEZE PHASE
-        procctrl::suspend_processes_by_name(roblox_process_name);
-        log("HHJ: Game suspended");
-
-        // Determine freeze duration
-        int freeze_duration = 200; // Base duration
-
-        if (hhj_freeze_delay > 0)
-        {
-            // User override
-            freeze_duration = hhj_freeze_delay;
-        }
-        else
-        {
-            // Default: 500ms total, or 200ms if fast mode
-            if (!hhj_fast_mode)
-            {
-                freeze_duration += 300; // 500ms total
-            }
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(freeze_duration));
-
-        // Release auto-timing keys if active
-        if (hhj_auto_timing)
-        {
-            input.releaseKey(CrossInput::Key::Space);
-            input.releaseKey(CrossInput::Key::W);
-        }
-
-        // UNFREEZE PHASE
-        procctrl::resume_processes_by_name(roblox_process_name);
-        log("HHJ: Game resumed");
-
-        // Delay 1: Wait before shiftlock
-        std::this_thread::sleep_for(std::chrono::milliseconds(hhj_delay1));
-
-        // Hold shiftlock (or zoom in if configured)
-        if (!globalzoomin)
-        {
-            input.holdKey(CrossInput::Key::LShift);
-        }
-        else
-        {
-            // Note: Mouse wheel simulation would go here
-            // For now using shift as fallback
-            input.holdKey(CrossInput::Key::LShift);
-        }
-
-        // Delay 2: Wait before spinning
-        std::this_thread::sleep_for(std::chrono::milliseconds(hhj_delay2));
-
-        // START SPINNING (activate HHJ speedglitch)
-        hhj_speedglitch_active.store(true, std::memory_order_relaxed);
-        log("HHJ: Spinning started");
-
-        // Delay 3: Hold shiftlock while spinning
-        std::this_thread::sleep_for(std::chrono::milliseconds(hhj_delay3));
-
-        // Release shiftlock
-        if (!globalzoomin)
-        {
-            input.releaseKey(CrossInput::Key::LShift);
-        }
-
-        // Continue spinning for HHJ length
-        std::this_thread::sleep_for(std::chrono::milliseconds(hhj_length));
-
-        // STOP SPINNING
-        hhj_speedglitch_active.store(false, std::memory_order_relaxed);
+            speed_pixels_x = static_cast<int>(std::round((base_value / roblox_sensitivity) * multiplier));
+            speed_pixels_y = -speed_pixels_x; // Opposite direction
+            input.moveMouse(speed_pixels_x, 0);  // Rotate 180° one ways 
         log("HHJ: Spinning stopped");
 
         log("HHJ completed");

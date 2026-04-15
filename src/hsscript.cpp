@@ -238,6 +238,7 @@ void HSScript::registerInputFunctions() {
     lua_register(L, "isKeyPressed", lua_isKeyPressed);
     lua_register(L, "typeText", lua_typeText);
     lua_register(L, "moveMouse", lua_moveMouse);
+    lua_register(L, "turnDegrees", lua_turnDegrees);
     lua_register(L, "sleep", lua_sleep);
     lua_register(L, "log", lua_log);
     lua_register(L, "waitForKey", lua_waitForKey);
@@ -450,6 +451,23 @@ int HSScript::lua_moveMouse(lua_State* L) {
     int dy = luaL_checkinteger(L, 2);
 
     s_instance->m_input.moveMouse(dx, dy);
+    return 0;
+}
+int HSScript::lua_turnDegrees(lua_State* L) {
+    if (!s_instance) {
+        lua_pushstring(L, "HSScript instance not available");
+        lua_error(L);
+        return 0;
+    }
+
+    int dx = luaL_checkinteger(L, 1);
+    float base_value = cam_fix_active ? dx * 2 * 1.388888889 : dx * 2;
+    float multiplier = 1; // Slight adjustment for accuracy
+
+    speed_pixels_x = static_cast<int>(std::round((base_value / roblox_sensitivity) * multiplier));
+    speed_pixels_y = -speed_pixels_x; // Opposite direction
+
+    s_instance->m_input.moveMouse(speed_pixels_x, 0);
     return 0;
 }
 
