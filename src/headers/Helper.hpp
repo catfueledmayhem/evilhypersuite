@@ -421,7 +421,7 @@ inline void showMessageBox(const std::string& title, const std::string& msg) {
 inline void bindToMacro(std::string macro_name) {
     if (!events[3]) {
         events[3] = true;
-        CrossInput::Key userKey = input.getCurrentPressedKey(5000);
+        CrossInput::Key userKey = input.getCurrentPressedKey(0);
         if (userKey != static_cast<CrossInput::Key>(0)) {
             std::cout << "[3RU] [inpctrl] Bound: " << input.getKeyName(userKey) << std::endl;
             Binds[macro_name] = userKey;
@@ -433,7 +433,7 @@ inline void bindToMacro(std::string macro_name) {
 inline void BindSpamKey() {
     if (!events[8]) {
         events[8] = true;
-        CrossInput::Key userKey = input.getCurrentPressedKey(5000);
+        CrossInput::Key userKey = input.getCurrentPressedKey(0);
         if (userKey != static_cast<CrossInput::Key>(0)) {
             std::cout << "[3RU] [inpctrl] Bound: " << input.getKeyName(userKey) << std::endl;
             SpamKey = userKey;
@@ -445,7 +445,7 @@ inline void BindSpamKey() {
 inline void BindVariable(CrossInput::Key* keyLoc) {
     if (!events[9]) {
         events[9] = true;
-        CrossInput::Key userKey = input.getCurrentPressedKey(5000);
+        CrossInput::Key userKey = input.getCurrentPressedKey(0);
         if (userKey != static_cast<CrossInput::Key>(0)) {
             std::cout << "[3RU] [inpctrl] Bound: " << input.getKeyName(userKey) << std::endl;
             *keyLoc = userKey;

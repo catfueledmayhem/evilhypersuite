@@ -95,6 +95,7 @@ private:
     static int lua_getKeyName(lua_State* L);
     static int lua_lagswitch(lua_State* L);
     static int lua_roblox_freeze(lua_State* L);
+    static int lua_trigger_macro(lua_State* L);
 
     // Helper function to convert string to Key enum
     //static CrossInput::Key stringToKey(const std::string& keyName);

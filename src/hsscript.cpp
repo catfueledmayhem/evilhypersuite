@@ -1,4 +1,5 @@
 #include "hsscript.hpp"
+#include "hsscriptman.hpp"
 #include "Helper.hpp"
 #include "LagSwitch.hpp"
 #include "logzz.hpp"
@@ -246,6 +247,7 @@ void HSScript::registerInputFunctions() {
     lua_register(L, "clear", lua_clear);
     lua_register(L, "lagSwitchMan", lua_lagswitch);
     lua_register(L, "robloxFreeze", lua_roblox_freeze);
+    lua_register(L, "triggerMacro", lua_trigger_macro);
 }
 
 // ==================== LUA CALLBACK FUNCTIONS ====================
@@ -283,6 +285,26 @@ int HSScript::lua_roblox_freeze(lua_State* L) {
     } else {
         procctrl::resume_processes_by_name(roblox_process_name);
     }
+    return 0;
+}
+int HSScript::lua_trigger_macro(lua_State* L) {
+    if (!s_instance) {
+        lua_pushstring(L, "HSScript instance not available");
+        lua_error(L);
+        return 0;
+    }
+    int argCount = lua_gettop(L);
+    // check at least 1 arg
+    if (argCount < 1) {
+        return luaL_error(L, "Expected at least 1 argument");
+    }
+
+    // arg 1 should be boolean
+    if (!lua_isnumber(L, 1)) {
+        return luaL_error(L, "Bad argument #1 (expected int)");
+    }
+
+    executeImportedScript(luaL_checkinteger(L, 1));
     return 0;
 }
 
