@@ -483,7 +483,7 @@ int HSScript::lua_turnDegrees(lua_State* L) {
     }
 
     int dx = luaL_checkinteger(L, 1);
-    float wcantfindmebase_value = cam_fix_active ? dx * 2 * 1.388888889 : dx * 4;
+    float wcantfindmebase_value = cam_fix_active ? dx * 2 * 1.388888889 : dx * 2;
     float wcantfindmemultiplier = 1; // Slight adjustment for accuracy
 
     float wcantfindmespeed_pixels_x = static_cast<int>(std::round((wcantfindmebase_value / roblox_sensitivity) * wcantfindmemultiplier));
