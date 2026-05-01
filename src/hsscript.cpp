@@ -483,13 +483,12 @@ int HSScript::lua_turnDegrees(lua_State* L) {
     }
 
     int dx = luaL_checkinteger(L, 1);
-    float base_value = cam_fix_active ? dx * 2 * 1.388888889 : dx * 2;
-    float multiplier = 1; // Slight adjustment for accuracy
+    float wcantfindmebase_value = cam_fix_active ? dx * 2 * 1.388888889 : dx * 4;
+    float wcantfindmemultiplier = 1; // Slight adjustment for accuracy
 
-    speed_pixels_x = static_cast<int>(std::round((base_value / roblox_sensitivity) * multiplier));
-    speed_pixels_y = -speed_pixels_x; // Opposite direction
+    float wcantfindmespeed_pixels_x = static_cast<int>(std::round((wcantfindmebase_value / roblox_sensitivity) * wcantfindmemultiplier));
 
-    s_instance->m_input.moveMouse(speed_pixels_x, 0);
+    s_instance->m_input.moveMouse(wcantfindmespeed_pixels_x, 0);
     return 0;
 }
 

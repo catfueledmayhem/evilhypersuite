@@ -52,6 +52,7 @@ inline void speedglitchLoop() {
         }
 
         // Perform the speedglitch rotation
+        log("Speedglitch pixels calculated: " + std::to_string(speed_pixels_x));
         input.moveMouse(speed_pixels_x, 0);  // Rotate 180° one way
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep1));
         input.moveMouse(speed_pixels_y, 0);  // Rotate 180° back
